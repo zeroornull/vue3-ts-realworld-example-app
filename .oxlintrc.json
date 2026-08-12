@@ -1,0 +1,8 @@
+{
+  "$schema": "https://oxc.rs/schema/oxlint.json",
+  "plugins": ["eslint", "typescript", "vue"],
+  "ignorePatterns": ["dist/**", "node_modules/**", "playground/**"],
+  "rules": {
+    "unicorn/no-empty-file": "off"
+  }
+}

@@ -1,0 +1,4 @@
+# Bun is the project runtime and package manager.
+# Keep dependencies installed for development and build scripts.
+[install]
+linker = "isolated"
