@@ -1,37 +1,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import ArticlePreview from './components/ArticlePreview.vue'
 
-type LearningStatus = 'not-started' | 'in-progress' | 'completed'
+const previewArticles = [
+  {
+    slug: 'learn-vue-props',
+    title: '把数据通过 Props 传给子组件',
+    description: '父组件保留数据来源，子组件只负责按照明确的类型契约展示文章。',
+    author: 'Conduit Learner',
+  },
+  {
+    slug: 'learn-vue-emits',
+    title: '用 Emits 把用户操作通知父组件',
+  },
+]
 
-const learningStatus = ref<LearningStatus>('not-started')
+const selectedArticleSlug = ref<string | null>(null)
 
-const statusLabels = {
-  'not-started': '尚未开始',
-  'in-progress': '学习中',
-  completed: '已完成',
-} satisfies Record<LearningStatus, string>
+const selectedArticle = computed(() =>
+  previewArticles.find((article) => article.slug === selectedArticleSlug.value),
+)
 
-const actionLabels = {
-  'not-started': '开始第一个迭代',
-  'in-progress': '完成当前迭代',
-  completed: '重新体验状态变化',
-} satisfies Record<LearningStatus, string>
-
-const statusLabel = computed(() => statusLabels[learningStatus.value])
-const actionLabel = computed(() => actionLabels[learningStatus.value])
-
-function advanceLearning(): void {
-  switch (learningStatus.value) {
-    case 'not-started':
-      learningStatus.value = 'in-progress'
-      break
-    case 'in-progress':
-      learningStatus.value = 'completed'
-      break
-    case 'completed':
-      learningStatus.value = 'not-started'
-      break
-  }
+function handleArticleSelect(slug: string): void {
+  selectedArticleSlug.value = slug
 }
 </script>
 
@@ -40,7 +31,7 @@ function advanceLearning(): void {
     <header class="navbar">
       <div class="container navbar-content">
         <a class="navbar-brand" href="/">conduit</a>
-        <span class="iteration-label">Iteration 1</span>
+        <span class="iteration-label">Iteration 2</span>
       </div>
     </header>
 
@@ -53,39 +44,50 @@ function advanceLearning(): void {
         </div>
       </section>
 
-      <section class="container page" aria-labelledby="learning-title">
-        <div class="learning-card">
-          <div>
-            <p class="section-label">学习式迁移</p>
-            <h2 id="learning-title">从一个可运行的应用外壳开始</h2>
-            <p class="learning-copy">
-              这一迭代只练习 Vue 响应式状态、计算属性和模板事件。Router、Pinia
-              与 API 会在后续迭代逐步加入。
+      <section class="container page" aria-labelledby="iteration-title">
+        <header class="iteration-intro">
+          <p class="section-label">类型化组件契约</p>
+          <h2 id="iteration-title">Props 向下传文章，Emits 向上传事件</h2>
+          <p>
+            文章仍然来自 App.vue 中的本地
+            fixture；这一轮只练习父子组件通信，不加入 Router、Pinia 或 API。
+          </p>
+        </header>
+
+        <div class="feed-layout">
+          <section class="feed-card" aria-labelledby="feed-title">
+            <div class="feed-header">
+              <h3 id="feed-title">Global Feed 预览</h3>
+              <span>{{ previewArticles.length }} 个本地 fixture</span>
+            </div>
+
+            <ArticlePreview
+              v-for="article in previewArticles"
+              :key="article.slug"
+              :article="article"
+              @select="handleArticleSelect"
+            />
+          </section>
+
+          <aside class="event-panel" aria-live="polite">
+            <p class="event-label">父组件收到的 select 事件</p>
+            <template v-if="selectedArticle">
+              <strong>{{ selectedArticle.title }}</strong>
+              <code>{{ selectedArticle.slug }}</code>
+            </template>
+            <p v-else>
+              点击任意文章的“Read more...”，这里会显示子组件发出的 slug。
             </p>
-          </div>
-
-          <dl class="status-panel" aria-live="polite">
-            <div>
-              <dt>当前状态</dt>
-              <dd :class="['status-badge', `status-badge--${learningStatus}`]">
-                {{ statusLabel }}
-              </dd>
-            </div>
-            <div>
-              <dt>本次范围</dt>
-              <dd>Vue SFC + TypeScript</dd>
-            </div>
-          </dl>
-
-          <button class="primary-action" type="button" @click="advanceLearning">
-            {{ actionLabel }}
-          </button>
+            <small>子组件不会直接修改父组件状态，只负责调用 emit。</small>
+          </aside>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <div class="container">Iteration 1 · No router, store, or API yet.</div>
+      <div class="container">
+        Iteration 2 · Typed props, typed emits, local fixtures.
+      </div>
     </footer>
   </div>
 </template>
