@@ -67,7 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 9 · Safe article Markdown.</div>
+      <div class="container">Iteration 10 · Comments and favorites.</div>
     </footer>
   </div>
 </template>

@@ -29,6 +29,16 @@ export class UnexpectedResponseError extends Error {
   }
 }
 
+export class ValidationError extends Error {
+  readonly errors: ApiErrors
+
+  constructor(message: string, errors: ApiErrors) {
+    super(message)
+    this.name = 'ValidationError'
+    this.errors = errors
+  }
+}
+
 export function isApiErrors(value: unknown): value is ApiErrors {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false
@@ -50,6 +60,15 @@ export function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
 }
 
 export function toApiErrors(error: unknown): ApiErrors {
+  if (error instanceof ValidationError) {
+    return Object.fromEntries(
+      Object.entries(error.errors).map(([field, messages]) => [
+        field,
+        [...messages],
+      ]),
+    )
+  }
+
   if (error instanceof ApiError && isApiErrorPayload(error.data)) {
     return Object.fromEntries(
       Object.entries(error.data.errors).map(([field, messages]) => [

@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–9 已完成；文章详情通过 `marked` 转换 Markdown，并在唯一的 `v-html` 边界前使用 DOMPurify 清理，下一步进入迭代 10 评论和收藏。
+> 当前状态：迭代 1–10 已完成；文章详情支持评论读取、发布、删除和收藏切换，并同步详情与 Home 列表状态，下一步进入迭代 11 创建、编辑和删除文章。
 
 ## 0. 先读这几条约定
 
@@ -885,6 +885,8 @@ feat: add article detail with safe markdown
 
 ## 14. 迭代 10：评论和收藏
 
+> 完成于 2026-08-14：已接入评论 GET/POST/DELETE 和收藏 POST/DELETE；空白评论、本地提交状态、失败保留输入、204 fallback、删除和跨 store 收藏同步均已覆盖。
+
 ### Why
 
 这一步练习登录状态参与页面交互、异步表单、局部列表更新和跨 store 同步。
@@ -946,15 +948,15 @@ src/views/Article.vue
 
 ### 测试和验收
 
-- [ ] 未登录用户看到登录/注册提示；
-- [ ] 登录用户可以发表评论；
-- [ ] 空白评论不能提交；
-- [ ] 提交期间按钮禁用或显示 loading；
-- [ ] 创建失败保留输入并显示错误；
-- [ ] 响应不完整时重新获取评论；
-- [ ] 删除 2xx 后本地评论消失；
-- [ ] 收藏后详情和 Home 列表状态同步；
-- [ ] Bun 单测覆盖成功、失败、204 和 network failure。
+- [x] 未登录用户看到登录/注册提示；
+- [x] 登录用户可以发表评论；
+- [x] 空白评论不能提交；
+- [x] 提交期间按钮禁用或显示 loading；
+- [x] 创建失败保留输入并显示错误；
+- [x] 响应不完整时重新获取评论；
+- [x] 删除 2xx 后本地评论消失；
+- [x] 收藏后详情和 Home 列表状态同步；
+- [x] Bun 单测覆盖成功、失败、204 和 network failure。
 
 ### 推荐提交
 

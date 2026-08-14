@@ -70,6 +70,25 @@ export const useHomeStore = defineStore('home', {
   },
 
   actions: {
+    updateArticleFavorite(
+      article: Pick<ArticleSummary, 'slug' | 'favorited' | 'favoritesCount'>,
+    ): void {
+      const index = this.articles.findIndex(
+        (current) => current.slug === article.slug,
+      )
+      const current = this.articles[index]
+
+      if (index < 0 || !current) {
+        return
+      }
+
+      this.articles[index] = {
+        ...current,
+        favorited: article.favorited,
+        favoritesCount: article.favoritesCount,
+      }
+    },
+
     async fetchFeed(
       source: FeedSource,
       query: ArticlesQuery,

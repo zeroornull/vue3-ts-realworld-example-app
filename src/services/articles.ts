@@ -4,6 +4,9 @@ import type {
   ArticleResponse,
   ArticleSummary,
   ArticlesResponse,
+  Comment,
+  CommentResponse,
+  CommentsResponse,
 } from '../types/realworld'
 import { request } from './api'
 
@@ -91,6 +94,34 @@ export function isArticleResponse(value: unknown): value is ArticleResponse {
   return isRecord(value) && isArticle(value.article)
 }
 
+export function isComment(value: unknown): value is Comment {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+    typeof value.id === 'number' &&
+    Number.isSafeInteger(value.id) &&
+    value.id >= 0 &&
+    typeof value.createdAt === 'string' &&
+    typeof value.updatedAt === 'string' &&
+    typeof value.body === 'string' &&
+    isArticleAuthor(value.author)
+  )
+}
+
+export function isCommentsResponse(value: unknown): value is CommentsResponse {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.comments) &&
+    value.comments.every(isComment)
+  )
+}
+
+export function isCommentResponse(value: unknown): value is CommentResponse {
+  return isRecord(value) && isComment(value.comment)
+}
+
 export function isTagsResponse(value: unknown): value is { tags: string[] } {
   return (
     isRecord(value) &&
@@ -119,6 +150,58 @@ export function getArticle(
   token: string | null = null,
 ): Promise<unknown | null> {
   return request<unknown>(`articles/${encodeURIComponent(slug)}`, { token })
+}
+
+export function getArticleComments(
+  slug: string,
+  token: string | null = null,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}/comments`, {
+    token,
+  })
+}
+
+export function createArticleComment(
+  slug: string,
+  body: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}/comments`, {
+    method: 'POST',
+    token,
+    body: { comment: { body } },
+  })
+}
+
+export function deleteArticleComment(
+  slug: string,
+  commentId: number,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(
+    `articles/${encodeURIComponent(slug)}/comments/${encodeURIComponent(String(commentId))}`,
+    { method: 'DELETE', token },
+  )
+}
+
+export function addArticleFavorite(
+  slug: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}/favorite`, {
+    method: 'POST',
+    token,
+  })
+}
+
+export function removeArticleFavorite(
+  slug: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}/favorite`, {
+    method: 'DELETE',
+    token,
+  })
 }
 
 export function getTags(): Promise<unknown | null> {

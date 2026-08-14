@@ -44,6 +44,22 @@ export type ArticleResponse = {
   article: Article
 }
 
+export type Comment = {
+  id: number
+  createdAt: string
+  updatedAt: string
+  body: string
+  author: ArticleAuthor
+}
+
+export type CommentsResponse = {
+  comments: Comment[]
+}
+
+export type CommentResponse = {
+  comment: Comment
+}
+
 export type UserResponse = {
   user: User
 }
