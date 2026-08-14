@@ -97,6 +97,13 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.nav-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .nav-link:hover,
 .nav-link.router-link-exact-active {
   color: var(--ink);
@@ -274,6 +281,25 @@ a:focus-visible {
 .route-card p {
   color: var(--muted);
   line-height: 1.7;
+}
+
+.route-card small {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.local-session-action {
+  width: fit-content;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--conduit-green-dark);
+  border-radius: 0.35rem;
+  color: #ffffff;
+  background: var(--conduit-green);
+  cursor: pointer;
+}
+
+.local-session-action:hover {
+  background: var(--conduit-green-dark);
 }
 
 .route-kicker {
