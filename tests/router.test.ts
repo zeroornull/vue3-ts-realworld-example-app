@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'bun:test'
+import { createMemoryHistory } from 'vue-router'
+import { createAppRouter } from '../src/router'
+
+describe('router skeleton', () => {
+  const router = createAppRouter(createMemoryHistory())
+
+  it('resolves article and profile parameters', () => {
+    expect(router.resolve('/article/demo-slug')).toMatchObject({
+      name: 'article',
+      params: { slug: 'demo-slug' },
+    })
+
+    expect(router.resolve('/profile/alice')).toMatchObject({
+      name: 'profile',
+      params: { username: 'alice' },
+    })
+  })
+
+  it('keeps home query parameters and catches unknown paths', () => {
+    expect(router.resolve('/?page=2')).toMatchObject({
+      name: 'home',
+      query: { page: '2' },
+    })
+
+    expect(router.resolve('/missing-page')).toMatchObject({
+      name: 'not-found',
+    })
+  })
+})

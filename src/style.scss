@@ -66,6 +66,7 @@ a:focus-visible {
   min-height: 4rem;
   align-items: center;
   justify-content: space-between;
+  gap: 2rem;
 }
 
 .navbar-brand {
@@ -76,7 +77,6 @@ a:focus-visible {
   text-decoration: none;
 }
 
-.iteration-label,
 .section-label,
 .eyebrow {
   font-size: 0.75rem;
@@ -85,8 +85,21 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.iteration-label {
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.nav-link {
   color: var(--muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.nav-link:hover,
+.nav-link.router-link-exact-active {
+  color: var(--ink);
 }
 
 .home-page {
@@ -151,7 +164,7 @@ a:focus-visible {
 }
 
 .feed-card,
-.event-panel {
+.route-guide {
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   background: var(--surface);
@@ -187,7 +200,7 @@ a:focus-visible {
   color: var(--conduit-green-dark);
 }
 
-.event-panel {
+.route-guide {
   display: grid;
   gap: 0.9rem;
   padding: 1.5rem;
@@ -203,24 +216,80 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.event-panel strong {
+.route-guide strong {
   color: var(--ink);
   line-height: 1.4;
 }
 
-.event-panel p,
-.event-panel small {
+.route-guide p,
+.route-guide small {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
 }
 
-.event-panel code {
+.route-guide a,
+.route-card a {
+  width: fit-content;
+  color: var(--conduit-green-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.route-guide a:hover,
+.route-card a:hover {
+  text-decoration: underline;
+}
+
+.route-page {
+  display: grid;
+  width: min(100% - 2rem, 48rem);
+  min-height: calc(100vh - 8rem);
+  margin-inline: auto;
+  padding-block: 3rem;
+  place-items: center;
+}
+
+.route-card {
+  display: grid;
+  width: 100%;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: 0 1.25rem 3rem rgb(39 43 48 / 8%);
+}
+
+.route-card h1,
+.route-card p {
+  margin: 0;
+}
+
+.route-card h1 {
+  color: var(--ink);
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+.route-card p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.route-kicker {
+  color: var(--conduit-green-dark) !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.route-value {
   width: fit-content;
   max-width: 100%;
-  padding: 0.35rem 0.55rem;
+  padding: 0.5rem 0.7rem;
   overflow-wrap: anywhere;
-  border-radius: 0.25rem;
+  border-radius: 0.3rem;
   color: var(--ink);
   background: #f1f3f2;
 }
@@ -241,6 +310,19 @@ a:focus-visible {
 }
 
 @media (max-width: 40rem) {
+  .navbar-content {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block: 0.8rem;
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
   .banner {
     padding-block: 3.5rem 3rem;
   }
