@@ -115,6 +115,48 @@ describe('home store Global Feed', () => {
   })
 })
 
+describe('home store Your Feed', () => {
+  it('loads an authenticated feed and stores an empty result as success', async () => {
+    const homeStore = useHomeStore()
+    let requestUrl = ''
+    let authorization = ''
+
+    globalThis.fetch = (async (input, init) => {
+      requestUrl = String(input)
+      authorization = new Headers(init?.headers).get('Authorization') ?? ''
+      return Response.json({ articles: [], articlesCount: 0 })
+    }) as typeof fetch
+
+    await homeStore.fetchFeed('following', globalQuery, 'saved-token')
+
+    expect(requestUrl).toEndWith('/articles/feed?limit=10&offset=0')
+    expect(authorization).toBe('Token saved-token')
+    expect(homeStore.status).toBe('success')
+    expect(homeStore.articles).toEqual([])
+    expect(homeStore.articlesCount).toBe(0)
+  })
+
+  it('clears previous articles instead of requesting Your Feed without a token', async () => {
+    const homeStore = useHomeStore()
+    let requestCount = 0
+
+    homeStore.articles = [demoArticle]
+    homeStore.articlesCount = 1
+    globalThis.fetch = (async () => {
+      requestCount += 1
+      return Response.json({ articles: [], articlesCount: 0 })
+    }) as typeof fetch
+
+    await homeStore.fetchFeed('following', globalQuery, null)
+
+    expect(requestCount).toBe(0)
+    expect(homeStore.status).toBe('error')
+    expect(homeStore.articles).toEqual([])
+    expect(homeStore.articlesCount).toBe(0)
+    expect(homeStore.error).toBe('Sign in to view your feed.')
+  })
+})
+
 describe('home store Popular Tags', () => {
   it('stores a valid tag list', async () => {
     const homeStore = useHomeStore()

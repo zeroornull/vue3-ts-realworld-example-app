@@ -12,6 +12,7 @@ const props = defineProps<{
   articlesCount: number
   currentPage: number
   error: string | null
+  emptyMessage?: string
 }>()
 
 defineEmits<{
@@ -46,7 +47,7 @@ const pages = computed(() =>
     v-else-if="articles.length === 0"
     class="article-preview feed-message empty-feed-message"
   >
-    No articles are here... yet.
+    {{ emptyMessage ?? 'No articles are here... yet.' }}
   </div>
 
   <template v-else>

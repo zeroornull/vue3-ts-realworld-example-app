@@ -13,25 +13,36 @@ import {
   createArticlesQuery,
   normalizeFeedTag,
   parseFeedPage,
+  resolveFeedMode,
 } from '../router/feed-query'
+import { useAuthStore } from '../stores/auth'
 import { useHomeStore } from '../stores/home'
 
 defineOptions({ name: 'HomeView' })
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const homeStore = useHomeStore()
+const { isAuthenticated, token } = storeToRefs(authStore)
 const { articles, articlesCount, error, status, tags, tagsError, tagsStatus } =
   storeToRefs(homeStore)
 
 const currentPage = computed(() => parseFeedPage(route.query.page))
 const activeTag = computed(() => normalizeFeedTag(route.params.tag))
+const feedMode = computed(() =>
+  resolveFeedMode(route.query.feed, activeTag.value),
+)
 const articlesQuery = computed(() =>
   createArticlesQuery(currentPage.value, activeTag.value),
 )
 
-function loadGlobalFeed(): void {
-  void homeStore.fetchGlobalFeed(articlesQuery.value)
+function loadFeed(): void {
+  void homeStore.fetchFeed(
+    feedMode.value === 'following' ? 'following' : 'global',
+    articlesQuery.value,
+    token.value,
+  )
 }
 
 function loadTags(): void {
@@ -50,7 +61,7 @@ function selectPage(page: number): void {
   void router.push({ path: route.path, query })
 }
 
-watch(articlesQuery, loadGlobalFeed, { immediate: true })
+watch([feedMode, articlesQuery, token], loadFeed, { immediate: true })
 onMounted(loadTags)
 </script>
 
@@ -66,17 +77,25 @@ onMounted(loadTags)
 
     <section class="container page" aria-labelledby="iteration-title">
       <header class="iteration-intro">
-        <p class="section-label">Global Feed · Tags · Pagination</p>
-        <h2 id="iteration-title">让 URL 决定当前文章列表</h2>
-        <p>page query 转换为 offset/limit，tag 路由转换为 API 过滤条件。</p>
+        <p class="section-label">Global Feed · Your Feed · Tags</p>
+        <h2 id="iteration-title">同一列表支持公开和认证数据源</h2>
+        <p>feed query 决定请求公开文章，还是携带 Token 请求关注流。</p>
       </header>
 
       <div class="feed-layout">
         <section class="feed-card" aria-labelledby="feed-title">
           <nav class="feed-toggle" aria-label="Feed 类型">
             <RouterLink
+              v-if="isAuthenticated"
               class="nav-link"
-              :class="{ active: !activeTag }"
+              :class="{ active: feedMode === 'following' }"
+              :to="{ name: 'home', query: { feed: 'following' } }"
+            >
+              Your Feed
+            </RouterLink>
+            <RouterLink
+              class="nav-link"
+              :class="{ active: feedMode === 'global' }"
               :to="{ name: 'home' }"
             >
               Global Feed
@@ -105,7 +124,12 @@ onMounted(loadTags)
             :articles-count="articlesCount"
             :current-page="currentPage"
             :error="error"
-            @retry="loadGlobalFeed"
+            :empty-message="
+              feedMode === 'following'
+                ? 'Your feed is empty. Follow authors to see their articles here.'
+                : undefined
+            "
+            @retry="loadFeed"
             @update:current-page="selectPage"
           />
         </section>

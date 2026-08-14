@@ -1,6 +1,7 @@
 import type { ArticlesQuery } from '../services/articles'
 
 export const ARTICLES_PER_PAGE = 10
+export type FeedMode = 'global' | 'following' | 'tag'
 
 export function parseFeedPage(value: unknown): number {
   if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
@@ -19,6 +20,17 @@ export function normalizeFeedTag(value: unknown): string | null {
   }
 
   return value.trim() || null
+}
+
+export function resolveFeedMode(
+  feedValue: unknown,
+  tag: string | null,
+): FeedMode {
+  if (tag) {
+    return 'tag'
+  }
+
+  return feedValue === 'following' ? 'following' : 'global'
 }
 
 export function createArticlesQuery(

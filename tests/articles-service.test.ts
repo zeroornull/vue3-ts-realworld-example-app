@@ -3,6 +3,7 @@ import { API_URL } from '../src/config'
 import {
   getGlobalArticles,
   getTags,
+  getUserFeed,
   isArticleAuthor,
   isArticleSummary,
   isArticlesResponse,
@@ -67,6 +68,28 @@ describe('articles service', () => {
     await getTags()
 
     expect(String(requests[0])).toBe(`${API_URL}/tags`)
+  })
+
+  it('gets Your Feed with its token, limit, and offset', async () => {
+    const requests: Array<{
+      input: string | URL | Request
+      init?: RequestInit
+    }> = []
+
+    globalThis.fetch = (async (input, init) => {
+      requests.push({ input, init })
+      return Response.json({ articles: [demoArticle], articlesCount: 1 })
+    }) as typeof fetch
+
+    await getUserFeed('saved-token', { limit: 10, offset: 10 })
+
+    expect(String(requests[0]?.input)).toBe(
+      `${API_URL}/articles/feed?limit=10&offset=10`,
+    )
+    expect(requests[0]?.init?.method).toBe('GET')
+
+    const headers = new Headers(requests[0]?.init?.headers)
+    expect(headers.get('Authorization')).toBe('Token saved-token')
   })
 })
 

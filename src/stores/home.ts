@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import {
   getGlobalArticles,
   getTags,
+  getUserFeed,
   isArticlesResponse,
   isTagsResponse,
   type ArticlesQuery,
@@ -15,6 +16,7 @@ import type { ArticleSummary } from '../types/realworld'
 
 export type HomeStatus = 'idle' | 'loading' | 'success' | 'error'
 export type TagsStatus = HomeStatus
+export type FeedSource = 'global' | 'following'
 
 export type HomeState = {
   status: HomeStatus
@@ -24,6 +26,7 @@ export type HomeState = {
   tagsStatus: TagsStatus
   tags: string[]
   tagsError: string | null
+  feedRequestId: number
 }
 
 function cloneArticle(article: ArticleSummary): ArticleSummary {
@@ -59,6 +62,7 @@ export const useHomeStore = defineStore('home', {
     tagsStatus: 'idle',
     tags: [],
     tagsError: null,
+    feedRequestId: 0,
   }),
 
   getters: {
@@ -66,26 +70,59 @@ export const useHomeStore = defineStore('home', {
   },
 
   actions: {
-    async fetchGlobalFeed(query: ArticlesQuery): Promise<void> {
+    async fetchFeed(
+      source: FeedSource,
+      query: ArticlesQuery,
+      token: string | null = null,
+    ): Promise<void> {
+      const requestId = ++this.feedRequestId
       this.status = 'loading'
       this.error = null
 
       try {
-        const response = await getGlobalArticles(query)
+        let response: unknown | null
+
+        if (source === 'following') {
+          if (!token) {
+            this.articles = []
+            this.articlesCount = 0
+            this.error = 'Sign in to view your feed.'
+            this.status = 'error'
+            return
+          }
+
+          response = await getUserFeed(token, query)
+        } else {
+          response = await getGlobalArticles(query)
+        }
+
+        if (requestId !== this.feedRequestId) {
+          return
+        }
 
         if (!isArticlesResponse(response)) {
-          throw new UnexpectedResponseError('GET articles')
+          throw new UnexpectedResponseError(
+            source === 'following' ? 'GET articles/feed' : 'GET articles',
+          )
         }
 
         this.articles = response.articles.map(cloneArticle)
         this.articlesCount = response.articlesCount
         this.status = 'success'
       } catch (error: unknown) {
+        if (requestId !== this.feedRequestId) {
+          return
+        }
+
         this.articles = []
         this.articlesCount = 0
         this.error = toFeedErrorMessage(error)
         this.status = 'error'
       }
+    },
+
+    async fetchGlobalFeed(query: ArticlesQuery): Promise<void> {
+      await this.fetchFeed('global', query)
     },
 
     async fetchTags(): Promise<void> {

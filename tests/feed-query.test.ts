@@ -5,6 +5,7 @@ import {
   createPaginationPages,
   normalizeFeedTag,
   parseFeedPage,
+  resolveFeedMode,
 } from '../src/router/feed-query'
 
 describe('feed query parsing', () => {
@@ -39,5 +40,12 @@ describe('feed query parsing', () => {
     expect(createPaginationPages(10)).toEqual([])
     expect(createPaginationPages(21)).toEqual([1, 2, 3])
     expect(createPaginationPages(21, 0)).toEqual([])
+  })
+
+  it('resolves Global, Your, and Tag feed modes defensively', () => {
+    expect(resolveFeedMode('following', null)).toBe('following')
+    expect(resolveFeedMode(['following'], null)).toBe('global')
+    expect(resolveFeedMode('anything-else', null)).toBe('global')
+    expect(resolveFeedMode('following', 'vue')).toBe('tag')
   })
 })

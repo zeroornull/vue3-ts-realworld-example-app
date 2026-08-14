@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–7、8A 和 8B 已完成；首页支持 Global Feed、分页和标签筛选，下一步进入迭代 8C Your Feed。
+> 当前状态：迭代 1–7、8A、8B 和 8C 已完成；首页支持 Global Feed、Your Feed、分页和标签筛选，下一步进入迭代 9 Article 详情和安全 Markdown。
 
 ## 0. 先读这几条约定
 
@@ -731,6 +731,8 @@ feat: add session restore and protected settings route
 > 8A 完成于 2026-08-14：已接入 `GET /articles`，并完成 loading、empty、error、重试和文章预览跳转。
 >
 > 8B 完成于 2026-08-14：`?page=N` 已转换为 `offset/limit`，`/tag/:tag` 已转换为 tag 过滤条件，并接入独立容错的 Popular Tags。
+>
+> 8C 完成于 2026-08-14：已接入携带 Token 的 `GET /articles/feed`，`/?feed=following` 受认证守卫保护，并支持 Your Feed 分页、空状态和退出后返回 Global Feed。
 
 ### Why
 
@@ -789,9 +791,10 @@ src/views/Home.vue
 - [x] `/tag/:tag` 过滤正确；
 - [x] tags 请求失败不会让首页白屏；
 - [x] 分页当前项有 `.active`；
-- [ ] Your Feed 未登录按守卫契约跳转；
+- [x] Your Feed 未登录按守卫契约跳转；
 - [x] store/API 单测验证 8A endpoint 和响应解析；
 - [x] 8B 单测验证 page/tag query。
+- [x] 8C 单测验证 `/articles/feed`、Token、认证恢复和空列表。
 
 ### 练习
 

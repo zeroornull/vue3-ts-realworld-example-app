@@ -10,7 +10,10 @@ export function installAuthGuard(router: Router, pinia: Pinia): void {
       await authStore.restoreSession()
     }
 
-    if (!to.meta.requiresAuth || authStore.status === 'authenticated') {
+    const requiresAuth =
+      Boolean(to.meta.requiresAuth) || to.query.feed === 'following'
+
+    if (!requiresAuth || authStore.status === 'authenticated') {
       return true
     }
 

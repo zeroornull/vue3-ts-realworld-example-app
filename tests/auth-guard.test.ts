@@ -85,4 +85,39 @@ describe('auth route guard', () => {
     expect(authStore.status).toBe('authenticated')
     expect(authStore.currentUser).toEqual(demoUser)
   })
+
+  it('redirects an unauthenticated Your Feed visit to login', async () => {
+    const router = createGuardedRouter(createPinia())
+
+    await router.push('/?feed=following')
+
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/?feed=following')
+  })
+
+  it('restores a saved session before entering Your Feed', async () => {
+    const pinia = createPinia()
+    const authStore = useAuthStore(pinia)
+    const router = createGuardedRouter(pinia)
+    let requestStarted = false
+
+    authStore.hydrateFromStorage(createTokenStorage('saved-token'))
+    globalThis.fetch = (async () => {
+      requestStarted = true
+      await Bun.sleep(20)
+      return Response.json({ user: demoUser })
+    }) as typeof fetch
+
+    const navigation = router.push('/?feed=following')
+    await Bun.sleep(1)
+
+    expect(requestStarted).toBe(true)
+    expect(authStore.status).toBe('loading')
+    expect(router.currentRoute.value.fullPath).not.toBe('/?feed=following')
+
+    await navigation
+
+    expect(router.currentRoute.value.fullPath).toBe('/?feed=following')
+    expect(authStore.status).toBe('authenticated')
+  })
 })

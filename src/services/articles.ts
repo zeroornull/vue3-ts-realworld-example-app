@@ -11,6 +11,19 @@ export type ArticlesQuery = {
   tag?: string
 }
 
+function createArticlesSearch(query: ArticlesQuery): URLSearchParams {
+  const search = new URLSearchParams({
+    limit: String(query.limit),
+    offset: String(query.offset),
+  })
+
+  if (query.tag) {
+    search.set('tag', query.tag)
+  }
+
+  return search
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -74,16 +87,16 @@ export function isTagsResponse(value: unknown): value is { tags: string[] } {
 export function getGlobalArticles(
   query: ArticlesQuery,
 ): Promise<unknown | null> {
-  const search = new URLSearchParams({
-    limit: String(query.limit),
-    offset: String(query.offset),
+  return request<unknown>(`articles?${createArticlesSearch(query)}`)
+}
+
+export function getUserFeed(
+  token: string,
+  query: ArticlesQuery,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/feed?${createArticlesSearch(query)}`, {
+    token,
   })
-
-  if (query.tag) {
-    search.set('tag', query.tag)
-  }
-
-  return request<unknown>(`articles?${search}`)
 }
 
 export function getTags(): Promise<unknown | null> {

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const { currentUser, status } = storeToRefs(authStore)
 
 function logout(): void {
   authStore.logout()
+  void router.push({ name: 'home' })
 }
 </script>
 
@@ -65,9 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">
-        Iteration 8B · Global Feed tags and pagination.
-      </div>
+      <div class="container">Iteration 8C · Authenticated Your Feed.</div>
     </footer>
   </div>
 </template>
