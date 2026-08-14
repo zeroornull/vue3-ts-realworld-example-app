@@ -86,7 +86,7 @@ async function deleteComment(): Promise<void> {
           :aria-label="`Delete comment ${comment.id}`"
           @click="deleteComment"
         >
-          <i class="ion-trash-a" aria-hidden="true"></i>
+          <i class="ion-trash-a" aria-hidden="true">×</i>
           {{ isDeleting ? 'Deleting...' : 'Delete' }}
         </button>
       </span>
@@ -128,5 +128,11 @@ async function deleteComment(): Promise<void> {
   color: #b42318;
   background: transparent;
   cursor: pointer;
+}
+
+.ion-trash-a {
+  display: inline-block;
+  margin-right: 0.2rem;
+  font-style: normal;
 }
 </style>

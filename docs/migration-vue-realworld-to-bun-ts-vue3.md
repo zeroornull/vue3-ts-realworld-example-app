@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A 和 15B 已完成；Playwright 已覆盖导航与认证主路径，下一步进入迭代 15C 文章和评论 E2E。
+> 当前状态：迭代 1–14、15A–15C 已完成；Playwright 已覆盖导航、认证和文章交互，下一步进入迭代 15D Profile、Settings 与 Follow E2E。
 
 ## 0. 先读这几条约定
 
@@ -1464,6 +1464,15 @@ export default defineConfig({
 - 浏览器断言 Token 只保存在 localStorage/请求头，不出现在普通页面文本中。
 
 15B 验收记录（2026-08-14）：新增 3 个认证 E2E，Playwright Chromium 累计 6 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 验证真实表单登录、认证导航、默认头像和 `jwtToken` 持久化，页面未显示 Token，控制台无错误。
+
+15C 实现记录：
+
+- 新增 `tests/e2e/article.spec.ts`，覆盖文章 Markdown、标签、评论列表和默认头像；
+- 评论测试验证 `{ comment: { body } }` 请求、创建后即时显示，以及携带 Token 删除自己的评论；
+- 收藏测试验证 POST/DELETE `/favorite`、`Favorite/Unfavorite` 文案、计数和 `.btn-outline-primary/.btn-primary` 状态；
+- 测试发现 `.ion-trash-a` 为空元素时浏览器判定不可见，导致官方 selector 无法点击；保留契约 class，并加入无外部字体依赖的可见删除符号。
+
+15C 验收记录（2026-08-15）：新增 3 个文章交互 E2E，Playwright Chromium 累计 9 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际验证发表评论、可见删除图标、删除评论和收藏切换，控制台无错误。
 
 ### 推荐提交
 
