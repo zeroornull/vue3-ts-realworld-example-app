@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15I 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段和 API 错误态，下一步进入迭代 15J。
+> 当前状态：迭代 1–14、15A–15J 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态和网络/响应异常，下一步进入迭代 15K。
 
 ## 0. 先读这几条约定
 
@@ -1550,11 +1550,22 @@ export default defineConfig({
 
 15I 验收记录（2026-08-15）：新增 5 个 API 错误态 E2E，Playwright Chromium 累计 26 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 使用本地 404 fixture 实测显示 `Profile unavailable` / `Profile not found.`，服务端的 `private server detail` 未进入页面，浏览器仅记录预期的 404 网络错误。官方 `error-handling`、`user-fetch-errors`、完整 navigation 和 security 套件仍未运行。
 
-下一轮 15J：网络失败与 malformed response E2E。
+15J 实现记录：
 
-- 覆盖 fetch 连接失败、2xx 空响应和错误 JSON 的页面表现；
-- 对比 HTTP 4xx/5xx 与 Connectivity/UnexpectedResponse 三类错误的可见文案；
-- 仍然保持本地 route mock，完成后再评估是否接入官方错误套件。
+- 新增 `tests/e2e/network-responses.spec.ts`，继续用 Playwright route mock 隔离网络与响应异常；
+- Global Feed 首次 fetch 断连时显示 Connectivity 错误，点击 `Try again` 后恢复文章列表；
+- 文章详情收到无法解析的 JSON 时显示 UnexpectedResponse 错误态；
+- 文章正文成功但评论响应损坏时保留文章，同时只把评论区域置为可重试错误态；
+- 登录接口返回空的 2xx body 时显示服务端响应无效，不发生错误导航或伪造会话；
+- 本轮只增加网络/响应层浏览器契约，没有修改已有业务实现。
+
+15J 验收记录（2026-08-15）：新增 4 个网络/响应 E2E，Playwright Chromium 累计 30 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 将 API 端口设为不可达时实测显示 `Unable to connect to the article service.` 与 Popular Tags fallback，页面不再停留在 Loading（浏览器仅记录预期的 `ERR_CONNECTION_REFUSED`）。官方 `error-handling`、`user-fetch-errors`、完整 navigation 和 security 套件仍未运行。
+
+下一轮 15K：安全内容的浏览器级验收与官方 security 套件准备。
+
+- 将已通过 Bun 单测的 Markdown XSS 规则提升到文章详情浏览器断言；
+- 确认危险 URL、事件属性和脚本不会进入 DOM；
+- 先运行本地隔离安全用例，再评估官方 `@security` 测试的真实 API 前置条件。
 
 ### 推荐提交
 
