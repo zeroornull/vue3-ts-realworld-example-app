@@ -22,6 +22,13 @@ export class ConnectivityError extends Error {
   }
 }
 
+export class UnexpectedResponseError extends Error {
+  constructor(context: string) {
+    super(`[Conduit API] ${context} returned an empty or malformed response`)
+    this.name = 'UnexpectedResponseError'
+  }
+}
+
 export function isApiErrors(value: unknown): value is ApiErrors {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false
@@ -40,4 +47,25 @@ export function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
   }
 
   return isApiErrors(value.errors)
+}
+
+export function toApiErrors(error: unknown): ApiErrors {
+  if (error instanceof ApiError && isApiErrorPayload(error.data)) {
+    return Object.fromEntries(
+      Object.entries(error.data.errors).map(([field, messages]) => [
+        field,
+        [...messages],
+      ]),
+    )
+  }
+
+  if (error instanceof ConnectivityError) {
+    return { network: ['is unavailable; check the API address and try again'] }
+  }
+
+  if (error instanceof UnexpectedResponseError) {
+    return { server: ['returned an invalid response'] }
+  }
+
+  return { server: ['failed unexpectedly'] }
 }

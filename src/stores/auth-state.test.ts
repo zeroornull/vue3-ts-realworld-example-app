@@ -20,6 +20,7 @@ describe('auth state transitions', () => {
       status: 'unauthenticated',
       token: null,
       user: null,
+      errors: {},
     })
   })
 
@@ -28,6 +29,7 @@ describe('auth state transitions', () => {
       status: 'authenticated',
       token: 'saved-token',
       user: null,
+      errors: {},
     })
   })
 
@@ -47,6 +49,7 @@ describe('auth state transitions', () => {
       status: 'unauthenticated',
       token: null,
       user: null,
+      errors: {},
     })
   })
 })

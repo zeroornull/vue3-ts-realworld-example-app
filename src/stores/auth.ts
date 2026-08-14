@@ -1,11 +1,17 @@
 import { defineStore } from 'pinia'
+import { loginUser, registerUser } from '../services/auth'
+import { toApiErrors, UnexpectedResponseError } from '../services/errors'
 import {
   readToken,
   removeToken,
   saveToken,
   type TokenStorage,
 } from '../services/jwt'
-import type { User } from '../types/realworld'
+import type {
+  LoginCredentials,
+  RegistrationCredentials,
+  User,
+} from '../types/realworld'
 import {
   createAuthenticatedState,
   createAuthStateFromToken,
@@ -24,6 +30,10 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    clearErrors(): void {
+      this.errors = {}
+    },
+
     hydrateFromStorage(storage?: TokenStorage | null): void {
       this.$patch(createAuthStateFromToken(readToken(storage)))
     },
@@ -31,6 +41,52 @@ export const useAuthStore = defineStore('auth', {
     setLocalSession(user: User, storage?: TokenStorage | null): void {
       saveToken(user.token, storage)
       this.$patch(createAuthenticatedState(this.$state, user))
+    },
+
+    async login(
+      credentials: LoginCredentials,
+      storage?: TokenStorage | null,
+    ): Promise<User> {
+      this.status = 'loading'
+      this.errors = {}
+
+      try {
+        const response = await loginUser(credentials)
+
+        if (!response) {
+          throw new UnexpectedResponseError('POST users/login')
+        }
+
+        this.setLocalSession(response.user, storage)
+        return response.user
+      } catch (error: unknown) {
+        this.status = this.token ? 'authenticated' : 'unauthenticated'
+        this.errors = toApiErrors(error)
+        throw error
+      }
+    },
+
+    async register(
+      credentials: RegistrationCredentials,
+      storage?: TokenStorage | null,
+    ): Promise<User> {
+      this.status = 'loading'
+      this.errors = {}
+
+      try {
+        const response = await registerUser(credentials)
+
+        if (!response) {
+          throw new UnexpectedResponseError('POST users')
+        }
+
+        this.setLocalSession(response.user, storage)
+        return response.user
+      } catch (error: unknown) {
+        this.status = this.token ? 'authenticated' : 'unauthenticated'
+        this.errors = toApiErrors(error)
+        throw error
+      }
     },
 
     logout(storage?: TokenStorage | null): void {

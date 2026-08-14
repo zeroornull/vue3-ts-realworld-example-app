@@ -53,7 +53,7 @@ function logout(): void {
 
     <footer class="site-footer">
       <div class="container">
-        Iteration 5 · Local Pinia auth state, no login API yet.
+        Iteration 6 · Real Login and Register API slice.
       </div>
     </footer>
   </div>

@@ -288,8 +288,36 @@ a:focus-visible {
   line-height: 1.6;
 }
 
-.local-session-action {
-  width: fit-content;
+.auth-card {
+  max-width: 32rem;
+}
+
+.auth-form fieldset {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.auth-form input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #c7cbcf;
+  border-radius: 0.35rem;
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.auth-form input:focus {
+  border-color: var(--conduit-green);
+  outline: 3px solid rgb(92 184 92 / 20%);
+}
+
+.auth-submit {
+  justify-self: end;
+  min-height: 2.85rem;
   padding: 0.65rem 1rem;
   border: 1px solid var(--conduit-green-dark);
   border-radius: 0.35rem;
@@ -298,8 +326,13 @@ a:focus-visible {
   cursor: pointer;
 }
 
-.local-session-action:hover {
+.auth-submit:hover:not(:disabled) {
   background: var(--conduit-green-dark);
+}
+
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .route-kicker {

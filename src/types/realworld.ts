@@ -39,3 +39,12 @@ export type ArticlesResponse = {
 export type UserResponse = {
   user: User
 }
+
+export type LoginCredentials = {
+  email: string
+  password: string
+}
+
+export type RegistrationCredentials = LoginCredentials & {
+  username: string
+}
