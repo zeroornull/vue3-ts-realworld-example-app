@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15C 已完成；Playwright 已覆盖导航、认证和文章交互，下一步进入迭代 15D Profile、Settings 与 Follow E2E。
+> 当前状态：迭代 1–14、15A–15D 已完成；Playwright 已覆盖导航、认证、文章交互、Profile 和 Settings，下一步进入迭代 15E 官方套件差距分析。
 
 ## 0. 先读这几条约定
 
@@ -1473,6 +1473,16 @@ export default defineConfig({
 - 测试发现 `.ion-trash-a` 为空元素时浏览器判定不可见，导致官方 selector 无法点击；保留契约 class，并加入无外部字体依赖的可见删除符号。
 
 15C 验收记录（2026-08-15）：新增 3 个文章交互 E2E，Playwright Chromium 累计 9 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际验证发表评论、可见删除图标、删除评论和收藏切换，控制台无错误。
+
+15D 实现记录：
+
+- 新增 `tests/e2e/profile-settings.spec.ts`，继续使用确定性的 API route mock，不依赖公共 API 数据；
+- Profile 测试覆盖默认头像、username、bio、My Articles，以及切换 `/profile/:username/favorites` 后使用 `favorited` 查询；
+- Follow 测试覆盖 POST/DELETE `/profiles/:username/follow`、按钮文案和 `Token <jwt>` 请求头；
+- Settings 测试覆盖 PUT `/user`、空 password 省略、轮换 Token 持久化、更新后 Profile 导航和 logout 清理会话；
+- 3 个浏览器路径首次通过后未发现新的业务实现缺口，因此本轮只增加 E2E 契约和进度记录。
+
+15D 验收记录（2026-08-15）：新增 3 个 Profile/Settings E2E，Playwright Chromium 累计 12 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际验证 Follow/Unfollow 的 POST、DELETE 顺序与认证头，页面未显示 Token，控制台无错误。官方完整 E2E 和 security 套件仍未运行，留到后续小迭代。
 
 ### 推荐提交
 
