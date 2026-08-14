@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15A · Playwright navigation smoke.</div>
+      <div class="container">Iteration 15B · Authentication E2E.</div>
     </footer>
   </div>
 </template>

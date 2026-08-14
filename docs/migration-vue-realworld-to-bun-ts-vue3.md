@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14 和 15A 已完成；Playwright 基础与导航 smoke 已接入，下一步进入迭代 15B 认证 E2E。
+> 当前状态：迭代 1–14、15A 和 15B 已完成；Playwright 已覆盖导航与认证主路径，下一步进入迭代 15C 文章和评论 E2E。
 
 ## 0. 先读这几条约定
 
@@ -1454,6 +1454,16 @@ export default defineConfig({
 - `bunfig.toml` 排除 `tests/e2e/**`，Bun 单测与 Playwright 测试保持各自的运行器边界。
 
 15A 验收记录（2026-08-14）：3 个 Playwright Chromium smoke、`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 再次验证 `/login` 与 `/settings` redirect，控制台无错误。官方套件和 security 套件本轮未运行，留到后续小迭代。
+
+15B 实现记录：
+
+- 新增 `tests/e2e/auth.spec.ts`，继续通过 Playwright route mock 隔离公共 API；
+- 登录测试验证 `{ user: { email, password } }` 请求、`jwtToken` 持久化，以及登录后返回原受保护路由；
+- 注册测试验证 `{ user: { username, email, password } }` 请求、认证导航和 Token 持久化；
+- 会话恢复测试预置 `jwtToken`，验证刷新 `/settings` 时以 `Token <jwt>` 请求 `/user`，并在进入页面前恢复表单用户；
+- 浏览器断言 Token 只保存在 localStorage/请求头，不出现在普通页面文本中。
+
+15B 验收记录（2026-08-14）：新增 3 个认证 E2E，Playwright Chromium 累计 6 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 验证真实表单登录、认证导航、默认头像和 `jwtToken` 持久化，页面未显示 Token，控制台无错误。
 
 ### 推荐提交
 
