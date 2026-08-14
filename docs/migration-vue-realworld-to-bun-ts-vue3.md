@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–7、8A、8B 和 8C 已完成；首页支持 Global Feed、Your Feed、分页和标签筛选，下一步进入迭代 9 Article 详情和安全 Markdown。
+> 当前状态：迭代 1–9 已完成；文章详情通过 `marked` 转换 Markdown，并在唯一的 `v-html` 边界前使用 DOMPurify 清理，下一步进入迭代 10 评论和收藏。
 
 ## 0. 先读这几条约定
 
@@ -812,6 +812,8 @@ src/views/Home.vue
 
 ## 13. 迭代 9：Article 详情和安全 Markdown
 
+> 完成于 2026-08-14：已接入 `GET /articles/:slug`、详情 store、ArticleMeta 和安全 Markdown helper；404、异常响应、XSS 与外链属性都有自动化测试。
+
 ### Why
 
 先做只读详情，理解动态路由、异步加载和 XSS 边界，再加入评论和收藏等写入操作。
@@ -833,7 +835,13 @@ bun add marked
 bun add dompurify
 ```
 
-如果实际类型检查需要声明包，再根据错误单独处理类型依赖；不要凭猜测批量安装。
+由于 Bun 测试环境没有浏览器 DOM，本迭代额外使用最新版 jsdom 作为**仅测试使用**的 DOM 实现，让 DOMPurify 的恶意 HTML 单测与浏览器执行同一套 helper：
+
+```bash
+bun add --dev jsdom @types/jsdom
+```
+
+不要在业务代码中导入 jsdom；它不会进入生产包。
 
 ### 最小改动
 
@@ -855,13 +863,13 @@ DOMPurify.sanitize(marked.parse(body))
 
 ### 测试和验收
 
-- [ ] `/article/:slug` 显示标题、作者、日期、tags 和正文；
-- [ ] 文章不存在显示可见错误；
-- [ ] 基础 Markdown 正常渲染；
-- [ ] `<script>`、事件属性和危险 URL 被清除；
-- [ ] 页面只有可审计的 sanitized `v-html`；
-- [ ] 外链新窗口具备 `rel="noopener noreferrer"`；
-- [ ] 安全单测覆盖恶意 HTML。
+- [x] `/article/:slug` 显示标题、作者、日期、tags 和正文；
+- [x] 文章不存在显示可见错误；
+- [x] 基础 Markdown 正常渲染；
+- [x] `<script>`、事件属性和危险 URL 被清除；
+- [x] 页面只有可审计的 sanitized `v-html`；
+- [x] 外链新窗口具备 `rel="noopener noreferrer"`；
+- [x] 安全单测覆盖恶意 HTML。
 
 ### 练习
 

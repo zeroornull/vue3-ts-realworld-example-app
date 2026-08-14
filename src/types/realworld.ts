@@ -31,9 +31,17 @@ export type ArticleSummary = {
   author: ArticleAuthor
 }
 
+export type Article = ArticleSummary & {
+  body: string
+}
+
 export type ArticlesResponse = {
   articles: ArticleSummary[]
   articlesCount: number
+}
+
+export type ArticleResponse = {
+  article: Article
 }
 
 export type UserResponse = {

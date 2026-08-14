@@ -67,7 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 8C · Authenticated Your Feed.</div>
+      <div class="container">Iteration 9 · Safe article Markdown.</div>
     </footer>
   </div>
 </template>

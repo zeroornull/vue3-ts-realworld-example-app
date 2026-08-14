@@ -1,15 +1,17 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { API_URL } from '../src/config'
 import {
+  getArticle,
   getGlobalArticles,
   getTags,
   getUserFeed,
+  isArticleResponse,
   isArticleAuthor,
   isArticleSummary,
   isArticlesResponse,
   isTagsResponse,
 } from '../src/services/articles'
-import type { ArticleSummary } from '../src/types/realworld'
+import type { Article, ArticleSummary } from '../src/types/realworld'
 
 const originalFetch = globalThis.fetch
 
@@ -28,6 +30,11 @@ const demoArticle: ArticleSummary = {
     image: null,
     following: false,
   },
+}
+
+const demoArticleDetail: Article = {
+  ...demoArticle,
+  body: '# Safe article body',
 }
 
 afterEach(() => {
@@ -91,6 +98,27 @@ describe('articles service', () => {
     const headers = new Headers(requests[0]?.init?.headers)
     expect(headers.get('Authorization')).toBe('Token saved-token')
   })
+
+  it('gets one encoded article slug with an optional session token', async () => {
+    const requests: Array<{
+      input: string | URL | Request
+      init?: RequestInit
+    }> = []
+
+    globalThis.fetch = (async (input, init) => {
+      requests.push({ input, init })
+      return Response.json({ article: demoArticleDetail })
+    }) as typeof fetch
+
+    await getArticle('safe/article slug', 'saved-token')
+
+    expect(String(requests[0]?.input)).toBe(
+      `${API_URL}/articles/safe%2Farticle%20slug`,
+    )
+    expect(new Headers(requests[0]?.init?.headers).get('Authorization')).toBe(
+      'Token saved-token',
+    )
+  })
 })
 
 describe('article response guards', () => {
@@ -135,5 +163,13 @@ describe('article response guards', () => {
     expect(isTagsResponse({ tags: ['vue', 'typescript'] })).toBe(true)
     expect(isTagsResponse({ tags: ['vue', 3] })).toBe(false)
     expect(isTagsResponse({})).toBe(false)
+  })
+
+  it('requires an article body on detail responses', () => {
+    expect(isArticleResponse({ article: demoArticleDetail })).toBe(true)
+    expect(isArticleResponse({ article: demoArticle })).toBe(false)
+    expect(
+      isArticleResponse({ article: { ...demoArticleDetail, body: null } }),
+    ).toBe(false)
   })
 })

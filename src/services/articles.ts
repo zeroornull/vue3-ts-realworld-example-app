@@ -1,5 +1,7 @@
 import type {
+  Article,
   ArticleAuthor,
+  ArticleResponse,
   ArticleSummary,
   ArticlesResponse,
 } from '../types/realworld'
@@ -76,6 +78,19 @@ export function isArticlesResponse(value: unknown): value is ArticlesResponse {
   )
 }
 
+export function isArticle(value: unknown): value is Article {
+  return (
+    isRecord(value) &&
+    isArticleSummary(value) &&
+    'body' in value &&
+    typeof value.body === 'string'
+  )
+}
+
+export function isArticleResponse(value: unknown): value is ArticleResponse {
+  return isRecord(value) && isArticle(value.article)
+}
+
 export function isTagsResponse(value: unknown): value is { tags: string[] } {
   return (
     isRecord(value) &&
@@ -97,6 +112,13 @@ export function getUserFeed(
   return request<unknown>(`articles/feed?${createArticlesSearch(query)}`, {
     token,
   })
+}
+
+export function getArticle(
+  slug: string,
+  token: string | null = null,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}`, { token })
 }
 
 export function getTags(): Promise<unknown | null> {
