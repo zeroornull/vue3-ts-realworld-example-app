@@ -254,4 +254,103 @@ describe('auth store', () => {
       network: ['is unavailable; check the API address and try again'],
     })
   })
+
+  it('updates settings, omits an empty password, and persists a rotated token', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage()
+    const updatedUser: User = {
+      email: 'updated@example.com',
+      token: 'rotated-token',
+      username: 'updated-learner',
+      bio: 'Updated bio.',
+      image: 'https://example.com/avatar.png',
+    }
+    let requestBody = ''
+
+    authStore.setLocalSession(demoUser, storage)
+    globalThis.fetch = (async (_input, init) => {
+      requestBody = String(init?.body)
+      return Response.json({ user: updatedUser })
+    }) as typeof fetch
+
+    await authStore.updateUser(
+      {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        bio: updatedUser.bio,
+        image: updatedUser.image,
+        password: '',
+      },
+      storage,
+    )
+
+    expect(JSON.parse(requestBody)).toEqual({
+      user: {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        bio: updatedUser.bio,
+        image: updatedUser.image,
+      },
+    })
+    expect(authStore.status).toBe('authenticated')
+    expect(authStore.currentUser).toEqual(updatedUser)
+    expect(values.get(JWT_TOKEN_KEY)).toBe(updatedUser.token)
+    expect(authStore.errors).toEqual({})
+  })
+
+  it('keeps the current session when a settings update fails', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage()
+    const data = { errors: { username: ['has already been taken'] } }
+
+    authStore.setLocalSession(demoUser, storage)
+    globalThis.fetch = (async () =>
+      Response.json(data, { status: 422 })) as typeof fetch
+
+    await expect(
+      authStore.updateUser(
+        {
+          username: 'taken-name',
+          email: demoUser.email,
+          bio: demoUser.bio,
+          image: demoUser.image,
+        },
+        storage,
+      ),
+    ).rejects.toBeInstanceOf(ApiError)
+
+    expect(authStore.status).toBe('authenticated')
+    expect(authStore.currentUser).toEqual(demoUser)
+    expect(values.get(JWT_TOKEN_KEY)).toBe(demoUser.token)
+    expect(authStore.errors).toEqual(data.errors)
+  })
+
+  it('keeps the current session when settings cannot reach the API', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage()
+
+    authStore.setLocalSession(demoUser, storage)
+    globalThis.fetch = (async () => {
+      throw new TypeError('network unavailable')
+    }) as typeof fetch
+
+    await expect(
+      authStore.updateUser(
+        {
+          username: demoUser.username,
+          email: demoUser.email,
+          bio: demoUser.bio,
+          image: demoUser.image,
+        },
+        storage,
+      ),
+    ).rejects.toBeInstanceOf(ConnectivityError)
+
+    expect(authStore.status).toBe('authenticated')
+    expect(authStore.currentUser).toEqual(demoUser)
+    expect(values.get(JWT_TOKEN_KEY)).toBe(demoUser.token)
+    expect(authStore.errors).toEqual({
+      network: ['is unavailable; check the API address and try again'],
+    })
+  })
 })

@@ -90,3 +90,11 @@ export type LoginCredentials = {
 export type RegistrationCredentials = LoginCredentials & {
   username: string
 }
+
+export type UserSettings = {
+  username: string
+  email: string
+  bio: string | null
+  image: string | null
+  password?: string
+}

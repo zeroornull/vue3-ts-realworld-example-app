@@ -6,6 +6,7 @@ import {
   isUserResponse,
   loginUser,
   registerUser,
+  updateCurrentUser,
 } from '../src/services/auth'
 import type { User } from '../src/types/realworld'
 
@@ -76,6 +77,26 @@ describe('auth service', () => {
 
     const headers = new Headers(requests[0]?.init?.headers)
     expect(headers.get('Authorization')).toBe('Token saved-token')
+  })
+
+  it('updates the current user with PUT and authentication', async () => {
+    const requests = captureSuccessfulRequest()
+    const settings = {
+      username: 'updated-learner',
+      email: 'updated@example.com',
+      bio: 'Updated bio.',
+      image: 'https://example.com/avatar.png',
+      password: 'new-secret',
+    }
+
+    await updateCurrentUser(settings, 'saved-token')
+
+    expect(String(requests[0]?.input)).toBe(`${API_URL}/user`)
+    expect(requests[0]?.init?.method).toBe('PUT')
+    expect(requests[0]?.init?.body).toBe(JSON.stringify({ user: settings }))
+    expect(new Headers(requests[0]?.init?.headers).get('Authorization')).toBe(
+      'Token saved-token',
+    )
   })
 })
 

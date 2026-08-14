@@ -3,6 +3,7 @@ import type {
   RegistrationCredentials,
   User,
   UserResponse,
+  UserSettings,
 } from '../types/realworld'
 import { request } from './api'
 
@@ -55,4 +56,15 @@ export function registerUser(
 
 export function getCurrentUser(token: string): Promise<unknown | null> {
   return request<unknown>('user', { token })
+}
+
+export function updateCurrentUser(
+  settings: UserSettings,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>('user', {
+    method: 'PUT',
+    token,
+    body: { user: settings },
+  })
 }

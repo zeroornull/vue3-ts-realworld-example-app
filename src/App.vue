@@ -67,7 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 12D · Personalized feed state.</div>
+      <div class="container">Iteration 13 · Settings and logout flow.</div>
     </footer>
   </div>
 </template>

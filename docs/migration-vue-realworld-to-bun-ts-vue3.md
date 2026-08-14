@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–12D 已完成；Your Feed、文章收藏跨 Store 同步和 Profile 标签页都能由 URL 恢复，用户关系里程碑完成，下一步进入迭代 13 Settings。
+> 当前状态：迭代 1–13 已完成；Settings 支持用户资料更新、可选密码、错误展示和退出登录，认证闭环完成，下一步进入迭代 14 主题、静态资源与 DOM 契约。
 
 ## 0. 先读这几条约定
 
@@ -1238,14 +1238,25 @@ PUT /user
 
 ### 测试和验收
 
-- [ ] `/settings` 只能由登录用户访问；
-- [ ] 能显示和编辑 username/email/image/bio；
-- [ ] 空密码不被发送为覆盖值；
-- [ ] 保存成功后 auth store 和 Header 更新；
-- [ ] `Update Settings` 和 `Or click here to logout` 文案符合契约；
-- [ ] 错误出现在 `.error-messages`；
-- [ ] 退出清除 `jwtToken` 并回首页；
-- [ ] token 不出现在日志或普通页面文本。
+- [x] `/settings` 只能由登录用户访问；
+- [x] 能显示和编辑 username/email/image/bio；
+- [x] 空密码不被发送为覆盖值；
+- [x] 保存成功后 auth store 和 Header 更新；
+- [x] `Update Settings` 和 `Or click here to logout` 文案符合契约；
+- [x] 错误出现在 `.error-messages`；
+- [x] 退出清除 `jwtToken` 并回首页；
+- [x] token 不出现在日志或普通页面文本。
+
+本轮实现记录：
+
+- 新增 `PUT /user` 的类型化 service，使用当前 Token 并发送 `{ user: settings }`；
+- auth store 在服务端返回合法 User 后统一更新用户和可能轮换的 Token，Header 会立即显示新 username；
+- Settings 表单从当前会话预填 image、username、bio 和 email，密码始终为空，不填写时不会进入请求 body；
+- 422 与网络错误继续使用现有 `.error-messages` 格式，失败时保留原用户和登录状态；
+- 保存成功后进入更新后的 Profile；页面内退出按钮清除 `jwtToken` 并返回首页；
+- 复用现有 `ListErrors`、auth store 和 App Header，没有创建重复的格式化工具或第二套 Header。
+
+验收记录（2026-08-14）：`bun run check`、117 个 Bun 测试和 `bun run build` 通过；浏览器验证了未登录守卫、表单预填、422 错误、空密码 PUT、Token 轮换、Header/Profile 更新和退出清理，页面未显示 Token，正常路径控制台无错误。
 
 ### 推荐提交
 

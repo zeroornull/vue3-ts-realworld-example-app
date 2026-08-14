@@ -4,11 +4,13 @@ import {
   isUserResponse,
   loginUser,
   registerUser,
+  updateCurrentUser,
 } from '../services/auth'
 import {
   ApiError,
   toApiErrors,
   UnexpectedResponseError,
+  ValidationError,
 } from '../services/errors'
 import {
   readToken,
@@ -20,6 +22,7 @@ import type {
   LoginCredentials,
   RegistrationCredentials,
   User,
+  UserSettings,
 } from '../types/realworld'
 import {
   createAuthenticatedState,
@@ -30,6 +33,16 @@ import {
   type AuthStatus,
   type AuthState,
 } from './auth-state'
+
+function createSettingsPayload(settings: UserSettings): UserSettings {
+  const { password, ...profile } = settings
+
+  if (password?.trim()) {
+    return { ...profile, password }
+  }
+
+  return profile
+}
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => createLoadingAuthState(),
@@ -141,6 +154,39 @@ export const useAuthStore = defineStore('auth', {
               ? 'authenticated'
               : 'unauthenticated'
             : previousStatus
+        this.errors = toApiErrors(error)
+        throw error
+      }
+    },
+
+    async updateUser(
+      settings: UserSettings,
+      storage?: TokenStorage | null,
+    ): Promise<User> {
+      const token = this.token
+      this.errors = {}
+
+      if (!token) {
+        const error = new ValidationError('Settings require authentication', {
+          auth: ['is required to update settings'],
+        })
+        this.errors = toApiErrors(error)
+        throw error
+      }
+
+      try {
+        const response = await updateCurrentUser(
+          createSettingsPayload(settings),
+          token,
+        )
+
+        if (!isUserResponse(response)) {
+          throw new UnexpectedResponseError('PUT user')
+        }
+
+        this.setLocalSession(response.user, storage)
+        return response.user
+      } catch (error: unknown) {
         this.errors = toApiErrors(error)
         throw error
       }
