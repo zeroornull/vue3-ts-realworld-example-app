@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–12B 已完成；Profile 支持 My Articles 与 Favorited Articles 双标签页，两种列表都能分页、直达和刷新恢复，下一步进入迭代 12C Follow/Unfollow。
+> 当前状态：迭代 1–12C 已完成；登录用户可以在 Profile 关注或取消关注其他用户，失败时保留原 Profile，下一步进入迭代 12D 个性化 Feed 与跨列表状态复核。
 
 ## 0. 先读这几条约定
 
@@ -1114,10 +1114,18 @@ feat: add favorited articles tab
 
 ### 12C：Follow/Unfollow
 
-1. 登录后才允许 follow action；
-2. 实现 POST/DELETE；
-3. 请求成功后同步按钮状态；
-4. 单独测试失败时保留原 profile。
+1. [x] 登录后才允许 follow action；
+2. [x] 实现 POST/DELETE；
+3. [x] 请求成功后同步按钮状态；
+4. [x] 单独测试失败时保留原 profile。
+
+本轮实现记录：
+
+- 未登录点击 Follow 会进入 Login，并通过安全的 `redirect` query 在登录后返回原 Profile；
+- `POST /profiles/:username/follow` 和 `DELETE /profiles/:username/follow` 统一携带 Token，用户名经过 URL 编码；
+- Follow/Unfollow 提交期间按钮禁用，成功后使用服务端返回的 Profile 更新 `following`；
+- 请求失败或响应结构异常时不做乐观更新，原 Profile 和按钮状态保持不变，同时显示局部错误；
+- 查看自己的 Profile 时显示 Settings 入口，不显示关注自己的按钮。
 
 推荐提交：
 
@@ -1170,7 +1178,7 @@ GET /articles/feed
 - [x] profile 和 favorites 路径可访问、可刷新；
 - [x] profile 不存在时不是白屏；
 - [x] profile 获取最多重试两次、间隔 400ms（若保留源行为）；
-- [ ] Follow/Unfollow 请求和按钮文字正确；
+- [x] Follow/Unfollow 请求和按钮文字正确；
 - [x] Home/Article 的 favorite 状态同步；
 - [x] Your Feed 未认证按契约跳转；
 - [x] `.profile-page`、`.user-info`、`.user-img`、`.user-pic` 存在；
@@ -1179,6 +1187,8 @@ GET /articles/feed
 12A 验收记录（2026-08-14）：`bun run check`、Bun 全量测试和 `bun run build` 通过；浏览器验证了公开 Profile、默认头像、12 篇文章分页、空文章用户、404 重试后错误页和路由用户名变化，正常路径控制台无错误。
 
 12B 验收记录（2026-08-14）：`bun run check`、108 个 Bun 测试和 `bun run build` 通过；浏览器验证了 My Articles/Favorited Articles 切换、收藏列表分页、`/profile/:username/favorites?page=2` 刷新恢复、返回作者文章时重置分页和空收藏状态，控制台无错误。
+
+12C 验收记录（2026-08-14）：`bun run check`、111 个 Bun 测试和 `bun run build` 通过；浏览器验证了未登录 Follow 跳转登录并返回、登录后 Follow/Unfollow 的 POST/DELETE 与按钮切换、500 失败时保留原 Profile 并显示错误，正常路径控制台无错误。
 
 ### 练习
 

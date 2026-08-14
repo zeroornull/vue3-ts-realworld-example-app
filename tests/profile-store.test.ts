@@ -140,6 +140,51 @@ describe('profile store', () => {
     expect(profileStore.profile).toEqual(bobProfile)
     expect(profileStore.status).toBe('success')
   })
+
+  it('stores the server profile after follow and unfollow succeed', async () => {
+    const profileStore = useProfileStore()
+    const followedProfile: Profile = { ...demoProfile, following: true }
+    const responses = [followedProfile, demoProfile]
+
+    profileStore.profile = { ...demoProfile }
+    profileStore.status = 'success'
+    globalThis.fetch = (async () =>
+      Response.json({ profile: responses.shift() })) as typeof fetch
+
+    await profileStore.follow('alice', 'saved-token')
+
+    expect(profileStore.profile).toEqual(followedProfile)
+    expect(profileStore.followStatus).toBe('success')
+    expect(profileStore.followError).toBeNull()
+
+    await profileStore.unfollow('alice', 'saved-token')
+
+    expect(profileStore.profile).toEqual(demoProfile)
+    expect(profileStore.followStatus).toBe('success')
+    expect(profileStore.followError).toBeNull()
+  })
+
+  it('keeps the original profile when a follow request fails', async () => {
+    const profileStore = useProfileStore()
+    const originalProfile = { ...demoProfile }
+
+    profileStore.profile = originalProfile
+    profileStore.status = 'success'
+    globalThis.fetch = (async () =>
+      Response.json(
+        { errors: { profile: ['could not be followed'] } },
+        { status: 500 },
+      )) as typeof fetch
+
+    await profileStore.follow('alice', 'saved-token')
+
+    expect(profileStore.profile).toEqual(originalProfile)
+    expect(profileStore.profile?.following).toBe(false)
+    expect(profileStore.followStatus).toBe('error')
+    expect(profileStore.followError).toBe(
+      'Unable to update the follow status (HTTP 500).',
+    )
+  })
 })
 
 describe('profile article feed store', () => {

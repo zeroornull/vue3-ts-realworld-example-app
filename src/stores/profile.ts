@@ -10,11 +10,17 @@ import {
   ConnectivityError,
   UnexpectedResponseError,
 } from '../services/errors'
-import { getProfile, isProfileResponse } from '../services/profiles'
+import {
+  followProfile,
+  getProfile,
+  isProfileResponse,
+  unfollowProfile,
+} from '../services/profiles'
 import type { ArticleSummary, Profile } from '../types/realworld'
 
 export type ProfileStatus = 'idle' | 'loading' | 'success' | 'error'
 export type ProfileArticlesSource = 'authored' | 'favorited'
+export type ProfileFollowStatus = 'idle' | 'loading' | 'success' | 'error'
 
 const PROFILE_FETCH_RETRIES = 2
 const PROFILE_FETCH_RETRY_DELAY_MS = 400
@@ -24,6 +30,9 @@ export type ProfileState = {
   profile: Profile | null
   error: string | null
   requestId: number
+  followStatus: ProfileFollowStatus
+  followError: string | null
+  followRequestId: number
   articlesStatus: ProfileStatus
   articles: ArticleSummary[]
   articlesCount: number
@@ -93,12 +102,31 @@ function toArticlesErrorMessage(error: unknown): string {
   return 'Unable to load profile articles.'
 }
 
+function toFollowErrorMessage(error: unknown): string {
+  if (error instanceof ConnectivityError) {
+    return 'Unable to connect to the profile service.'
+  }
+
+  if (error instanceof ApiError) {
+    return `Unable to update the follow status (HTTP ${error.status}).`
+  }
+
+  if (error instanceof UnexpectedResponseError) {
+    return 'The profile service returned an invalid follow response.'
+  }
+
+  return 'Unable to update the follow status.'
+}
+
 export const useProfileStore = defineStore('profile', {
   state: (): ProfileState => ({
     status: 'idle',
     profile: null,
     error: null,
     requestId: 0,
+    followStatus: 'idle',
+    followError: null,
+    followRequestId: 0,
     articlesStatus: 'idle',
     articles: [],
     articlesCount: 0,
@@ -112,9 +140,12 @@ export const useProfileStore = defineStore('profile', {
       token: string | null = null,
     ): Promise<void> {
       const requestId = ++this.requestId
+      this.followRequestId += 1
       this.status = 'loading'
       this.profile = null
       this.error = null
+      this.followStatus = 'idle'
+      this.followError = null
 
       for (let attempt = 0; attempt <= PROFILE_FETCH_RETRIES; attempt += 1) {
         if (requestId !== this.requestId) {
@@ -150,6 +181,62 @@ export const useProfileStore = defineStore('profile', {
           await delay(PROFILE_FETCH_RETRY_DELAY_MS)
         }
       }
+    },
+
+    async setFollowing(
+      username: string,
+      token: string,
+      following: boolean,
+    ): Promise<void> {
+      if (this.profile?.username !== username) {
+        return
+      }
+
+      const requestId = ++this.followRequestId
+      this.followStatus = 'loading'
+      this.followError = null
+
+      try {
+        const response = following
+          ? await followProfile(username, token)
+          : await unfollowProfile(username, token)
+
+        if (
+          requestId !== this.followRequestId ||
+          this.profile?.username !== username
+        ) {
+          return
+        }
+
+        if (
+          !isProfileResponse(response) ||
+          response.profile.username !== username
+        ) {
+          throw new UnexpectedResponseError(
+            following
+              ? 'POST profiles/:username/follow'
+              : 'DELETE profiles/:username/follow',
+          )
+        }
+
+        this.profile = cloneProfile(response.profile)
+        this.followStatus = 'success'
+      } catch (error: unknown) {
+        if (requestId !== this.followRequestId) {
+          return
+        }
+
+        this.followError = toFollowErrorMessage(error)
+        this.followStatus = 'error'
+      }
+    },
+
+    async follow(username: string, token: string): Promise<void> {
+      await this.setFollowing(username, token, true)
+    },
+
+    async unfollow(username: string, token: string): Promise<void> {
+      await this.setFollowing(username, token, false)
     },
 
     async fetchArticles(

@@ -30,3 +30,23 @@ export function getProfile(
     token,
   })
 }
+
+export function followProfile(
+  username: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`profiles/${encodeURIComponent(username)}/follow`, {
+    method: 'POST',
+    token,
+  })
+}
+
+export function unfollowProfile(
+  username: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`profiles/${encodeURIComponent(username)}/follow`, {
+    method: 'DELETE',
+    token,
+  })
+}

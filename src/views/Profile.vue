@@ -22,13 +22,15 @@ const DEFAULT_AVATAR = '/default-avatar.svg'
 const route = useRoute()
 const router = useRouter()
 const profileStore = useProfileStore()
-const { token } = storeToRefs(useAuthStore())
+const { currentUser, isAuthenticated, token } = storeToRefs(useAuthStore())
 const {
   articles,
   articlesCount,
   articlesError,
   articlesStatus,
   error,
+  followError,
+  followStatus,
   profile,
   status,
 } = storeToRefs(profileStore)
@@ -39,6 +41,14 @@ const articlesQuery = computed(() =>
   createArticlesQuery(currentPage.value, null),
 )
 const avatarUrl = computed(() => profile.value?.image?.trim() || DEFAULT_AVATAR)
+const isCurrentUser = computed(
+  () => currentUser.value?.username === profile.value?.username,
+)
+const followLabel = computed(() =>
+  profile.value?.following
+    ? `Unfollow ${props.username}`
+    : `Follow ${props.username}`,
+)
 const articlesTitle = computed(() =>
   showFavorited.value
     ? `Articles favorited by ${props.username}`
@@ -80,6 +90,26 @@ function selectPage(page: number): void {
   }
 
   void router.push({ path: route.path, query })
+}
+
+async function toggleFollow(): Promise<void> {
+  if (followStatus.value === 'loading') {
+    return
+  }
+
+  if (!isAuthenticated.value || !token.value) {
+    await router.push({
+      name: 'login',
+      query: { redirect: route.fullPath },
+    })
+    return
+  }
+
+  if (profile.value?.following) {
+    await profileStore.unfollow(props.username, token.value)
+  } else {
+    await profileStore.follow(props.username, token.value)
+  }
 }
 
 function showDefaultAvatar(event: Event): void {
@@ -128,10 +158,31 @@ watch(
             :alt="`${profile.username}'s avatar`"
             @error="showDefaultAvatar"
           />
-          <p class="section-label">Read-only profile</p>
+          <p class="section-label">Community profile</p>
           <h1>{{ profile.username }}</h1>
           <p class="profile-bio">
             {{ profile.bio || 'This user has not added a bio yet.' }}
+          </p>
+          <RouterLink
+            v-if="isCurrentUser"
+            class="profile-action"
+            :to="{ name: 'settings' }"
+          >
+            Edit Profile Settings
+          </RouterLink>
+          <button
+            v-else
+            class="profile-action action-btn"
+            :class="{ active: profile.following }"
+            type="button"
+            :disabled="followStatus === 'loading'"
+            :aria-pressed="profile.following"
+            @click="toggleFollow"
+          >
+            {{ followStatus === 'loading' ? 'Saving...' : followLabel }}
+          </button>
+          <p v-if="followError" class="follow-error" role="alert">
+            {{ followError }}
           </p>
         </div>
       </header>
@@ -231,6 +282,33 @@ watch(
   margin: 0.85rem 0 0;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.profile-action {
+  margin-top: 1.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--conduit-green-dark);
+  border-radius: 0.35rem;
+  color: var(--conduit-green-dark);
+  background: transparent;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.profile-action.active {
+  color: #ffffff;
+  background: var(--conduit-green);
+}
+
+.profile-action:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.follow-error {
+  margin: 0.75rem 0 0;
+  color: #b42318;
 }
 
 .profile-content {

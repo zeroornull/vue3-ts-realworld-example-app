@@ -5,9 +5,11 @@ import {
   getProfileArticles,
 } from '../src/services/articles'
 import {
+  followProfile,
   getProfile,
   isProfile,
   isProfileResponse,
+  unfollowProfile,
 } from '../src/services/profiles'
 import type { Profile } from '../src/types/realworld'
 
@@ -87,6 +89,37 @@ describe('profile service', () => {
       `${API_URL}/articles?limit=10&offset=20&favorited=alice+example`,
     )
     expect(new Headers(requestInit?.headers).get('Authorization')).toBe(
+      'Token saved-token',
+    )
+  })
+
+  it('follows and unfollows an encoded profile with authentication', async () => {
+    const requests: Array<{
+      input: string | URL | Request
+      init: RequestInit | undefined
+    }> = []
+
+    globalThis.fetch = (async (input, init) => {
+      requests.push({ input, init })
+      return Response.json({ profile: demoProfile })
+    }) as typeof fetch
+
+    await followProfile('alice/example', 'saved-token')
+    await unfollowProfile('alice/example', 'saved-token')
+
+    expect(requests).toHaveLength(2)
+    expect(String(requests[0]?.input)).toBe(
+      `${API_URL}/profiles/alice%2Fexample/follow`,
+    )
+    expect(requests[0]?.init?.method).toBe('POST')
+    expect(new Headers(requests[0]?.init?.headers).get('Authorization')).toBe(
+      'Token saved-token',
+    )
+    expect(String(requests[1]?.input)).toBe(
+      `${API_URL}/profiles/alice%2Fexample/follow`,
+    )
+    expect(requests[1]?.init?.method).toBe('DELETE')
+    expect(new Headers(requests[1]?.init?.headers).get('Authorization')).toBe(
       'Token saved-token',
     )
   })
