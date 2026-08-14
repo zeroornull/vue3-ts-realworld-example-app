@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15H 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings 和 null/empty 字段，下一步进入迭代 15I。
+> 当前状态：迭代 1–14、15A–15I 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段和 API 错误态，下一步进入迭代 15J。
 
 ## 0. 先读这几条约定
 
@@ -1539,11 +1539,22 @@ export default defineConfig({
 
 15H 验收记录（2026-08-15）：新增 3 个 null/empty 字段 E2E，Playwright Chromium 累计 21 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 使用本地 null 数据 fixture 实测 Profile 默认头像、文章作者默认头像和友好 bio，页面无控制台消息。官方 `null-fields`、完整 error-handling 和 security 套件仍未运行。
 
-下一轮 15I：错误态与 API 异常 E2E。
+15I 实现记录：
 
-- 先覆盖登录失败、无效 Token、Profile/文章 404 和 5xx 的可见错误态；
-- 继续使用隔离 route mock，不连接公共 API，不提前接入官方完整套件；
-- 重点学习 Playwright 的响应注入、重试/错误边界和“页面可恢复”验收。
+- 新增 `tests/e2e/error-states.spec.ts`，继续用隔离 route mock 注入确定性的 API 异常；
+- 登录 422 验证字段错误会留在表单上，且不会伪造 Token；
+- 保存的无效 Token 收到 401 后会被清理，并回到带安全 redirect 的登录页；
+- Profile 404 验证有限重试三次后显示 `Profile not found.`，不把服务端错误 payload 直接暴露给用户；
+- 文章 404 验证独立错误页，文章 503 验证点击 `Try again` 后可恢复为正常详情页；
+- 本轮只增加浏览器错误态契约，没有修改已有 store、router 或 API 实现。
+
+15I 验收记录（2026-08-15）：新增 5 个 API 错误态 E2E，Playwright Chromium 累计 26 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 使用本地 404 fixture 实测显示 `Profile unavailable` / `Profile not found.`，服务端的 `private server detail` 未进入页面，浏览器仅记录预期的 404 网络错误。官方 `error-handling`、`user-fetch-errors`、完整 navigation 和 security 套件仍未运行。
+
+下一轮 15J：网络失败与 malformed response E2E。
+
+- 覆盖 fetch 连接失败、2xx 空响应和错误 JSON 的页面表现；
+- 对比 HTTP 4xx/5xx 与 Connectivity/UnexpectedResponse 三类错误的可见文案；
+- 仍然保持本地 route mock，完成后再评估是否接入官方错误套件。
 
 ### 推荐提交
 
