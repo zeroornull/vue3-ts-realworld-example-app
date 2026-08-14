@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15G 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile 和 Settings，下一步进入迭代 15H。
+> 当前状态：迭代 1–14、15A–15H 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings 和 null/empty 字段，下一步进入迭代 15I。
 
 ## 0. 先读这几条约定
 
@@ -1528,6 +1528,22 @@ export default defineConfig({
 - 本轮只增加浏览器契约，没有修改已有 Home、Router 或 store 实现。
 
 15G 验收记录（2026-08-15）：新增 3 个 URL/query E2E，Playwright Chromium 累计 18 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际验证 `/tag/vue` 的请求参数、标签展示和默认头像，控制台无错误。官方完整 navigation/url-navigation 套件仍未运行。
+
+15H 实现记录：
+
+- 新增 `tests/e2e/null-fields.spec.ts`，继续用 Playwright route mock 隔离 API 数据；
+- 公开 Profile 使用 `image: null`、`bio: null`，验证默认头像、友好 bio 文案和文章作者头像 fallback；
+- 认证文章详情使用 null 作者与评论作者，验证导航栏、文章作者、评论编辑器和评论列表头像都回退到 `/default-avatar.svg`；
+- Settings 使用 null 的 `image` 与 `bio`，验证表单初始化为空字符串，而不是把 `null` 渲染成文本；
+- 删除过宽的整页 `not.toContainText('null')` 断言，保留与字段行为直接相关的 DOM 断言，避免把 fixture 标题和 tag 当成缺陷。
+
+15H 验收记录（2026-08-15）：新增 3 个 null/empty 字段 E2E，Playwright Chromium 累计 21 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 使用本地 null 数据 fixture 实测 Profile 默认头像、文章作者默认头像和友好 bio，页面无控制台消息。官方 `null-fields`、完整 error-handling 和 security 套件仍未运行。
+
+下一轮 15I：错误态与 API 异常 E2E。
+
+- 先覆盖登录失败、无效 Token、Profile/文章 404 和 5xx 的可见错误态；
+- 继续使用隔离 route mock，不连接公共 API，不提前接入官方完整套件；
+- 重点学习 Playwright 的响应注入、重试/错误边界和“页面可恢复”验收。
 
 ### 推荐提交
 

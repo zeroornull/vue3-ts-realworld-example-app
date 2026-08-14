@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15G · URL navigation E2E.</div>
+      <div class="container">Iteration 15H · Null and empty fields E2E.</div>
     </footer>
   </div>
 </template>
