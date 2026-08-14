@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–7 已完成；已具备登录、注册、会话恢复和受保护路由，下一步进入迭代 8 Global Feed。
+> 当前状态：迭代 1–7 和 8A 已完成；首页已接入 Global Feed，下一步进入迭代 8B 分页和标签。
 
 ## 0. 先读这几条约定
 
@@ -728,6 +728,8 @@ feat: add session restore and protected settings route
 
 ## 12. 迭代 8：Home Global Feed，再扩展标签和分页
 
+> 8A 完成于 2026-08-14：已接入 `GET /articles`，并完成 loading、empty、error、重试和文章预览跳转；分页、标签和 Your Feed 尚未开始。
+
 ### Why
 
 Home 是第一个完整的“API → store → list component → route query”垂直切片。先做 Global Feed，稳定后再增加标签、分页和 Your Feed。
@@ -779,14 +781,15 @@ src/views/Home.vue
 
 ### 测试和验收
 
-- [ ] `/` 显示 Global Feed；
-- [ ] loading、空列表、API 错误有明确 UI；
+- [x] `/` 显示 Global Feed；
+- [x] loading、空列表、API 错误有明确 UI；
 - [ ] `?page=N` 生成正确 offset/limit；
 - [ ] `/tag/:tag` 过滤正确；
 - [ ] tags 请求失败不会让首页白屏；
 - [ ] 分页当前项有 `.active`；
 - [ ] Your Feed 未登录按守卫契约跳转；
-- [ ] store/API 单测验证 query 和响应解析。
+- [x] store/API 单测验证 8A endpoint 和响应解析；
+- [ ] 8B 单测验证 page/tag query。
 
 ### 练习
 
@@ -797,7 +800,9 @@ src/views/Home.vue
 ### 推荐提交
 
 ```text
-feat: add global feed tags and pagination
+8A: feat: add global feed slice
+8B: feat: add global feed tags and pagination
+8C: feat: add authenticated user feed
 ```
 
 ## 13. 迭代 9：Article 详情和安全 Markdown

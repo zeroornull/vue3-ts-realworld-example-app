@@ -65,9 +65,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">
-        Iteration 7 · Session restore and protected routes.
-      </div>
+      <div class="container">Iteration 8A · Global Feed API slice.</div>
     </footer>
   </div>
 </template>

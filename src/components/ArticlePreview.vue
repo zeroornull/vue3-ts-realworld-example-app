@@ -1,48 +1,65 @@
 <script setup lang="ts">
-type PreviewArticle = {
-  slug: string
-  title: string
-  description?: string
-  author?: string
-}
+import { RouterLink } from 'vue-router'
+import type { ArticleSummary } from '../types/realworld'
 
-const props = withDefaults(
-  defineProps<{
-    article: PreviewArticle
-    actionLabel?: string
-  }>(),
-  {
-    actionLabel: 'Read more...',
-  },
-)
-
-const emit = defineEmits<{
-  select: [slug: PreviewArticle['slug']]
+defineProps<{
+  article: ArticleSummary
 }>()
 
-function selectArticle(): void {
-  emit('select', props.article.slug)
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+function formatDate(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date)
 }
 </script>
 
 <template>
   <article class="article-preview">
     <div class="article-meta">
-      <span class="author">{{ article.author || '匿名作者' }}</span>
-      <span class="fixture-label">Local fixture</span>
+      <div class="author-details">
+        <RouterLink
+          class="author"
+          :to="{
+            name: 'profile',
+            params: { username: article.author.username },
+          }"
+        >
+          {{ article.author.username }}
+        </RouterLink>
+        <time class="article-date" :datetime="article.createdAt">
+          {{ formatDate(article.createdAt) }}
+        </time>
+      </div>
+
+      <span
+        class="favorite-count"
+        :aria-label="`${article.favoritesCount} favorites`"
+      >
+        ♥ {{ article.favoritesCount }}
+      </span>
     </div>
 
-    <h3>{{ article.title }}</h3>
-    <p>{{ article.description || '这篇文章暂时没有摘要。' }}</p>
-
-    <button
+    <RouterLink
       class="preview-link"
-      type="button"
-      :aria-label="`${actionLabel}：${article.title}`"
-      @click="selectArticle"
+      :to="{ name: 'article', params: { slug: article.slug } }"
     >
-      {{ actionLabel }}
-    </button>
+      <h2>{{ article.title }}</h2>
+      <p>{{ article.description }}</p>
+
+      <div class="preview-footer">
+        <span>Read more...</span>
+        <ul v-if="article.tagList.length" class="tag-list">
+          <li v-for="(tag, index) in article.tagList" :key="`${tag}-${index}`">
+            {{ tag }}
+          </li>
+        </ul>
+      </div>
+    </RouterLink>
   </article>
 </template>
 
@@ -52,52 +69,106 @@ function selectArticle(): void {
   border-top: 1px solid var(--line);
 }
 
-.article-meta {
+.article-meta,
+.preview-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.75rem;
+}
+
+.article-meta {
+  margin-bottom: 0.8rem;
+}
+
+.author-details {
+  display: grid;
+  gap: 0.15rem;
 }
 
 .author {
   color: var(--conduit-green-dark);
   font-size: 0.9rem;
   font-weight: 700;
+  text-decoration: none;
 }
 
-.fixture-label {
+.author:hover {
+  text-decoration: underline;
+}
+
+.article-date,
+.favorite-count {
   color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
 }
 
-h3 {
+.favorite-count {
+  padding: 0.3rem 0.55rem;
+  border: 1px solid rgb(92 184 92 / 40%);
+  border-radius: 0.35rem;
+  color: var(--conduit-green-dark);
+}
+
+.preview-link {
+  display: grid;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+h2,
+p {
   margin: 0;
+}
+
+h2 {
   color: var(--ink);
   font-size: 1.35rem;
   line-height: 1.3;
 }
 
 p {
-  margin: 0.55rem 0 1rem;
   color: var(--muted);
   line-height: 1.65;
 }
 
-.preview-link {
-  padding: 0;
-  border: 0;
+.preview-footer {
+  margin-top: 0.5rem;
   color: #8a8f94;
-  background: transparent;
-  cursor: pointer;
   font-size: 0.85rem;
 }
 
-.preview-link:hover {
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-list li {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #d7d9db;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.preview-link:hover h2 {
   color: var(--conduit-green-dark);
-  text-decoration: underline;
+}
+
+@media (max-width: 32rem) {
+  .preview-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tag-list {
+    justify-content: flex-start;
+  }
 }
 </style>

@@ -1,33 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import ArticlePreview from '../components/ArticlePreview.vue'
+import { storeToRefs } from 'pinia'
+import { onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
+import ArticleList from '../components/ArticleList.vue'
+import { useHomeStore } from '../stores/home'
 
 defineOptions({ name: 'HomeView' })
 
-const previewArticles = [
-  {
-    slug: 'learn-vue-props',
-    title: '把数据通过 Props 传给子组件',
-    description: '父组件保留数据来源，子组件只负责按照明确的类型契约展示文章。',
-    author: 'Conduit Learner',
-  },
-  {
-    slug: 'learn-vue-emits',
-    title: '用 Emits 把用户操作通知父组件',
-  },
-]
+const homeStore = useHomeStore()
+const { articles, articlesCount, error, status } = storeToRefs(homeStore)
 
-const route = useRoute()
-const router = useRouter()
-
-const currentPage = computed(() =>
-  typeof route.query.page === 'string' ? route.query.page : '1',
-)
-
-function openArticle(slug: string): void {
-  void router.push({ name: 'article', params: { slug } })
+function loadGlobalFeed(): void {
+  void homeStore.fetchGlobalFeed()
 }
+
+onMounted(loadGlobalFeed)
 </script>
 
 <template>
@@ -42,36 +29,44 @@ function openArticle(slug: string): void {
 
     <section class="container page" aria-labelledby="iteration-title">
       <header class="iteration-intro">
-        <p class="section-label">Vue Router 导航骨架</p>
-        <h2 id="iteration-title">让 URL 和页面职责先成立</h2>
-        <p>文章仍是本地 fixture；点击预览后只根据 slug 导航到占位详情页。</p>
+        <p class="section-label">Global Feed</p>
+        <h2 id="iteration-title">从 API 加载真实文章列表</h2>
+        <p>
+          本轮只完成 Global Feed，先观察请求、store
+          和列表组件如何组成一个完整切片。
+        </p>
       </header>
 
       <div class="feed-layout">
         <section class="feed-card" aria-labelledby="feed-title">
+          <nav class="feed-toggle" aria-label="Feed 类型">
+            <RouterLink class="nav-link active" :to="{ name: 'home' }">
+              Global Feed
+            </RouterLink>
+          </nav>
+
           <div class="feed-header">
-            <h3 id="feed-title">Global Feed 预览</h3>
-            <span>{{ previewArticles.length }} 个本地 fixture</span>
+            <h3 id="feed-title">Latest articles</h3>
+            <span v-if="status === 'success'">
+              {{ articlesCount }} articles
+            </span>
+            <span v-else-if="status === 'error'">Load failed</span>
+            <span v-else>Waiting for articles</span>
           </div>
 
-          <ArticlePreview
-            v-for="article in previewArticles"
-            :key="article.slug"
-            :article="article"
-            @select="openArticle"
+          <ArticleList
+            :status="status"
+            :articles="articles"
+            :error="error"
+            @retry="loadGlobalFeed"
           />
         </section>
 
-        <aside class="route-guide">
-          <p class="event-label">Route query</p>
-          <strong>当前页码：{{ currentPage }}</strong>
-          <RouterLink :to="{ name: 'home', query: { page: '2' } }"
-            >切换到 ?page=2</RouterLink
-          >
-          <RouterLink :to="{ name: 'profile', params: { username: 'alice' } }">
-            打开 /profile/alice
-          </RouterLink>
-          <small>RouterLink 切换 URL 时不会整页刷新。</small>
+        <aside class="route-guide sidebar">
+          <p class="event-label">Iteration 8A</p>
+          <strong>当前只请求 GET /articles</strong>
+          <p>Popular Tags、分页和 Your Feed 会在后续小步中加入。</p>
+          <small>先把加载、空列表和错误状态做稳定，再扩展查询参数。</small>
         </aside>
       </div>
     </section>
