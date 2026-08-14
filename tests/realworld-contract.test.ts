@@ -24,6 +24,20 @@ test('pins the shared RealWorld theme and selector contract', async () => {
   expect(theme).toContain('Conduit Minimal CSS')
 })
 
+test('keeps upstream E2E discovery separate from the runnable local suite', async () => {
+  const [packageJson, officialConfig] = await Promise.all([
+    read('package.json'),
+    read('playwright.official.config.ts'),
+  ])
+
+  expect(packageJson).toContain(
+    '"test:e2e:official:list": "bunx playwright test --config playwright.official.config.ts --list"',
+  )
+  expect(officialConfig).toContain("testDir: './realworld/specs/e2e'")
+  expect(officialConfig).toContain('webServer:')
+  expect(officialConfig).toContain('127.0.0.1:4173')
+})
+
 test('exposes the Conduit document metadata and static assets', async () => {
   const document = await read('index.html')
 

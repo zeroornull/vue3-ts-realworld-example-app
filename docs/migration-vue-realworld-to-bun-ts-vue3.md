@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15D 已完成；Playwright 已覆盖导航、认证、文章交互、Profile 和 Settings，下一步进入迭代 15E 官方套件差距分析。
+> 当前状态：迭代 1–14、15A–15E 已完成；Playwright 已覆盖导航、认证、文章交互、Profile 和 Settings，官方套件已完成只发现盘点，下一步进入迭代 15F。
 
 ## 0. 先读这几条约定
 
@@ -1483,6 +1483,31 @@ export default defineConfig({
 - 3 个浏览器路径首次通过后未发现新的业务实现缺口，因此本轮只增加 E2E 契约和进度记录。
 
 15D 验收记录（2026-08-15）：新增 3 个 Profile/Settings E2E，Playwright Chromium 累计 12 个测试通过；`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际验证 Follow/Unfollow 的 POST、DELETE 顺序与认证头，页面未显示 Token，控制台无错误。官方完整 E2E 和 security 套件仍未运行，留到后续小迭代。
+
+15E 差距分析：
+
+官方 submodule 目录共有 12 个可发现的 spec 文件、139 个测试；其中 16 个属于 `@security`，其余 123 个依赖真实 API 数据或服务端错误注入。本项目当前本地套件为 4 个 spec 文件、12 个测试。
+
+| 官方 spec                                              | 测试数 | 当前状态                                              | 下一步                           |
+| ------------------------------------------------------ | -----: | ----------------------------------------------------- | -------------------------------- |
+| `articles.spec.ts`                                     |     10 | 已覆盖渲染、收藏；创建/编辑/删除和标签编辑仍缺        | 15F 先补文章写入边界             |
+| `auth.spec.ts`                                         |      8 | 已覆盖登录、注册、会话恢复；错误登录和无效 Token 缺   | 15F 与错误态一起补               |
+| `comments.spec.ts`                                     |      9 | 已覆盖新增、删除、Token；长文本、刷新保留和权限边界缺 | 后续补充                         |
+| `navigation.spec.ts` + `url-navigation.spec.ts`        |     23 | 已覆盖基础导航；标签、分页、Your Feed URL 契约缺      | 后续补充                         |
+| `social.spec.ts` + Profile/Settings                    |     13 | 已覆盖 Profile、Favorites、Follow、Settings 主流程    | 补异常与回归                     |
+| `null-fields.spec.ts`                                  |     11 | 默认头像有局部覆盖；Settings 字段和头像清空组合缺     | 后续补充                         |
+| `error-handling.spec.ts` + `user-fetch-errors.spec.ts` |     45 | 尚未接入官方注入场景                                  | 需要先固定 API mock/错误注入边界 |
+| `health.spec.ts`                                       |      4 | 尚未单独执行                                          | 依赖 API 可用性策略              |
+| `xss-security.spec.ts`                                 |     16 | Bun Markdown 单测已有；官方安全 E2E 未执行            | 最后单独运行 `@security`         |
+
+15E 实现记录：
+
+- 新增 `playwright.official.config.ts`，将官方 `realworld/specs/e2e` 与本地 `tests/e2e` 隔离；
+- 新增 `bun run test:e2e:official:list`，只列出测试，不创建用户、不写入文章、不调用公共 API；
+- `tsconfig.node.json` 纳入官方配置，避免配置文件脱离 TypeScript 检查；
+- `tests/realworld-contract.test.ts` 增加配置隔离契约，防止把官方套件误并入默认 `bun run test:e2e`。
+
+15E 验收记录（2026-08-15）：`bun run test:e2e:official:list` 发现 139 个测试、12 个官方 spec 文件；7 个 RealWorld 契约单测通过，未执行官方测试主体，也未触碰公共 API 数据。当前官方完整 E2E 和 security 仍是明确未运行状态。
 
 ### 推荐提交
 
