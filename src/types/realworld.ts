@@ -1,0 +1,41 @@
+export type User = {
+  email: string
+  token: string
+  username: string
+  bio: string | null
+  image: string | null
+}
+
+export type ApiErrors = Record<string, string[]>
+
+export type ApiErrorPayload = {
+  errors: ApiErrors
+}
+
+export type ArticleAuthor = {
+  username: string
+  bio: string | null
+  image: string | null
+  following: boolean
+}
+
+export type ArticleSummary = {
+  slug: string
+  title: string
+  description: string
+  tagList: string[]
+  createdAt: string
+  updatedAt: string
+  favorited: boolean
+  favoritesCount: number
+  author: ArticleAuthor
+}
+
+export type ArticlesResponse = {
+  articles: ArticleSummary[]
+  articlesCount: number
+}
+
+export type UserResponse = {
+  user: User
+}
