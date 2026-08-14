@@ -1,17 +1,27 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { ARTICLES_PER_PAGE, createPaginationPages } from '../router/feed-query'
 import type { HomeStatus } from '../stores/home'
 import type { ArticleSummary } from '../types/realworld'
 import ArticlePreview from './ArticlePreview.vue'
+import VPagination from './VPagination.vue'
 
-defineProps<{
+const props = defineProps<{
   status: HomeStatus
   articles: ArticleSummary[]
+  articlesCount: number
+  currentPage: number
   error: string | null
 }>()
 
 defineEmits<{
   retry: []
+  'update:currentPage': [page: number]
 }>()
+
+const pages = computed(() =>
+  createPaginationPages(props.articlesCount, ARTICLES_PER_PAGE),
+)
 </script>
 
 <template>
@@ -46,6 +56,13 @@ defineEmits<{
       :article="article"
     />
   </template>
+
+  <VPagination
+    v-if="status === 'success'"
+    :pages="pages"
+    :current-page="currentPage"
+    @update:current-page="$emit('update:currentPage', $event)"
+  />
 </template>
 
 <style scoped>

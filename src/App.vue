@@ -65,7 +65,9 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 8A · Global Feed API slice.</div>
+      <div class="container">
+        Iteration 8B · Global Feed tags and pagination.
+      </div>
     </footer>
   </div>
 </template>

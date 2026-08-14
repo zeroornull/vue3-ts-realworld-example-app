@@ -13,6 +13,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('../views/Home.vue'),
   },
   {
+    path: '/tag/:tag',
+    name: 'tag',
+    component: () => import('../views/Home.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('../views/Login.vue'),

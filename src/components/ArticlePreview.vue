@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { ArticleSummary } from '../types/realworld'
+import TagList from './TagList.vue'
 
 defineProps<{
   article: ArticleSummary
@@ -53,11 +54,7 @@ function formatDate(value: string): string {
 
       <div class="preview-footer">
         <span>Read more...</span>
-        <ul v-if="article.tagList.length" class="tag-list">
-          <li v-for="(tag, index) in article.tagList" :key="`${tag}-${index}`">
-            {{ tag }}
-          </li>
-        </ul>
+        <TagList v-if="article.tagList.length" :tags="article.tagList" />
       </div>
     </RouterLink>
   </article>
@@ -139,24 +136,6 @@ p {
   font-size: 0.85rem;
 }
 
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tag-list li {
-  padding: 0.15rem 0.5rem;
-  border: 1px solid #d7d9db;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.72rem;
-}
-
 .preview-link:hover h2 {
   color: var(--conduit-green-dark);
 }
@@ -165,10 +144,6 @@ p {
   .preview-footer {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .tag-list {
-    justify-content: flex-start;
   }
 }
 </style>

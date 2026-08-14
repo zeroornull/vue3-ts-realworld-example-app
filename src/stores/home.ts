@@ -1,5 +1,11 @@
 import { defineStore } from 'pinia'
-import { getGlobalArticles, isArticlesResponse } from '../services/articles'
+import {
+  getGlobalArticles,
+  getTags,
+  isArticlesResponse,
+  isTagsResponse,
+  type ArticlesQuery,
+} from '../services/articles'
 import {
   ApiError,
   ConnectivityError,
@@ -8,12 +14,16 @@ import {
 import type { ArticleSummary } from '../types/realworld'
 
 export type HomeStatus = 'idle' | 'loading' | 'success' | 'error'
+export type TagsStatus = HomeStatus
 
 export type HomeState = {
   status: HomeStatus
   articles: ArticleSummary[]
   articlesCount: number
   error: string | null
+  tagsStatus: TagsStatus
+  tags: string[]
+  tagsError: string | null
 }
 
 function cloneArticle(article: ArticleSummary): ArticleSummary {
@@ -46,6 +56,9 @@ export const useHomeStore = defineStore('home', {
     articles: [],
     articlesCount: 0,
     error: null,
+    tagsStatus: 'idle',
+    tags: [],
+    tagsError: null,
   }),
 
   getters: {
@@ -53,12 +66,12 @@ export const useHomeStore = defineStore('home', {
   },
 
   actions: {
-    async fetchGlobalFeed(): Promise<void> {
+    async fetchGlobalFeed(query: ArticlesQuery): Promise<void> {
       this.status = 'loading'
       this.error = null
 
       try {
-        const response = await getGlobalArticles()
+        const response = await getGlobalArticles(query)
 
         if (!isArticlesResponse(response)) {
           throw new UnexpectedResponseError('GET articles')
@@ -72,6 +85,26 @@ export const useHomeStore = defineStore('home', {
         this.articlesCount = 0
         this.error = toFeedErrorMessage(error)
         this.status = 'error'
+      }
+    },
+
+    async fetchTags(): Promise<void> {
+      this.tagsStatus = 'loading'
+      this.tagsError = null
+
+      try {
+        const response = await getTags()
+
+        if (!isTagsResponse(response)) {
+          throw new UnexpectedResponseError('GET tags')
+        }
+
+        this.tags = [...response.tags]
+        this.tagsStatus = 'success'
+      } catch {
+        this.tags = []
+        this.tagsError = 'Popular tags are temporarily unavailable.'
+        this.tagsStatus = 'error'
       }
     },
   },

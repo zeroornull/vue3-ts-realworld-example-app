@@ -5,6 +5,12 @@ import type {
 } from '../types/realworld'
 import { request } from './api'
 
+export type ArticlesQuery = {
+  limit: number
+  offset: number
+  tag?: string
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -36,7 +42,7 @@ export function isArticleSummary(value: unknown): value is ArticleSummary {
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
     typeof value.favorited === 'boolean' &&
-    Number.isInteger(value.favoritesCount) &&
+    Number.isSafeInteger(value.favoritesCount) &&
     typeof value.favoritesCount === 'number' &&
     value.favoritesCount >= 0 &&
     isArticleAuthor(value.author)
@@ -52,11 +58,34 @@ export function isArticlesResponse(value: unknown): value is ArticlesResponse {
     Array.isArray(value.articles) &&
     value.articles.every(isArticleSummary) &&
     typeof value.articlesCount === 'number' &&
-    Number.isInteger(value.articlesCount) &&
+    Number.isSafeInteger(value.articlesCount) &&
     value.articlesCount >= 0
   )
 }
 
-export function getGlobalArticles(): Promise<unknown | null> {
-  return request<unknown>('articles')
+export function isTagsResponse(value: unknown): value is { tags: string[] } {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.tags) &&
+    value.tags.every((tag) => typeof tag === 'string')
+  )
+}
+
+export function getGlobalArticles(
+  query: ArticlesQuery,
+): Promise<unknown | null> {
+  const search = new URLSearchParams({
+    limit: String(query.limit),
+    offset: String(query.offset),
+  })
+
+  if (query.tag) {
+    search.set('tag', query.tag)
+  }
+
+  return request<unknown>(`articles?${search}`)
+}
+
+export function getTags(): Promise<unknown | null> {
+  return request<unknown>('tags')
 }

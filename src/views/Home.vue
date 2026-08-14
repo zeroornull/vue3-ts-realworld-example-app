@@ -1,20 +1,57 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, watch } from 'vue'
+import {
+  RouterLink,
+  useRoute,
+  useRouter,
+  type LocationQueryRaw,
+} from 'vue-router'
 import ArticleList from '../components/ArticleList.vue'
+import TagList from '../components/TagList.vue'
+import {
+  createArticlesQuery,
+  normalizeFeedTag,
+  parseFeedPage,
+} from '../router/feed-query'
 import { useHomeStore } from '../stores/home'
 
 defineOptions({ name: 'HomeView' })
 
+const route = useRoute()
+const router = useRouter()
 const homeStore = useHomeStore()
-const { articles, articlesCount, error, status } = storeToRefs(homeStore)
+const { articles, articlesCount, error, status, tags, tagsError, tagsStatus } =
+  storeToRefs(homeStore)
+
+const currentPage = computed(() => parseFeedPage(route.query.page))
+const activeTag = computed(() => normalizeFeedTag(route.params.tag))
+const articlesQuery = computed(() =>
+  createArticlesQuery(currentPage.value, activeTag.value),
+)
 
 function loadGlobalFeed(): void {
-  void homeStore.fetchGlobalFeed()
+  void homeStore.fetchGlobalFeed(articlesQuery.value)
 }
 
-onMounted(loadGlobalFeed)
+function loadTags(): void {
+  void homeStore.fetchTags()
+}
+
+function selectPage(page: number): void {
+  const query: LocationQueryRaw = { ...route.query }
+
+  if (page > 1) {
+    query.page = String(page)
+  } else {
+    delete query.page
+  }
+
+  void router.push({ path: route.path, query })
+}
+
+watch(articlesQuery, loadGlobalFeed, { immediate: true })
+onMounted(loadTags)
 </script>
 
 <template>
@@ -29,19 +66,27 @@ onMounted(loadGlobalFeed)
 
     <section class="container page" aria-labelledby="iteration-title">
       <header class="iteration-intro">
-        <p class="section-label">Global Feed</p>
-        <h2 id="iteration-title">从 API 加载真实文章列表</h2>
-        <p>
-          本轮只完成 Global Feed，先观察请求、store
-          和列表组件如何组成一个完整切片。
-        </p>
+        <p class="section-label">Global Feed · Tags · Pagination</p>
+        <h2 id="iteration-title">让 URL 决定当前文章列表</h2>
+        <p>page query 转换为 offset/limit，tag 路由转换为 API 过滤条件。</p>
       </header>
 
       <div class="feed-layout">
         <section class="feed-card" aria-labelledby="feed-title">
           <nav class="feed-toggle" aria-label="Feed 类型">
-            <RouterLink class="nav-link active" :to="{ name: 'home' }">
+            <RouterLink
+              class="nav-link"
+              :class="{ active: !activeTag }"
+              :to="{ name: 'home' }"
+            >
               Global Feed
+            </RouterLink>
+            <RouterLink
+              v-if="activeTag"
+              class="nav-link active"
+              :to="{ name: 'tag', params: { tag: activeTag } }"
+            >
+              # {{ activeTag }}
             </RouterLink>
           </nav>
 
@@ -57,18 +102,52 @@ onMounted(loadGlobalFeed)
           <ArticleList
             :status="status"
             :articles="articles"
+            :articles-count="articlesCount"
+            :current-page="currentPage"
             :error="error"
             @retry="loadGlobalFeed"
+            @update:current-page="selectPage"
           />
         </section>
 
         <aside class="route-guide sidebar">
-          <p class="event-label">Iteration 8A</p>
-          <strong>当前只请求 GET /articles</strong>
-          <p>Popular Tags、分页和 Your Feed 会在后续小步中加入。</p>
-          <small>先把加载、空列表和错误状态做稳定，再扩展查询参数。</small>
+          <p class="event-label">Popular Tags</p>
+
+          <p v-if="tagsStatus === 'idle' || tagsStatus === 'loading'">
+            Loading tags...
+          </p>
+
+          <div v-else-if="tagsStatus === 'error'" class="sidebar-error">
+            <p>{{ tagsError }}</p>
+            <button type="button" @click="loadTags">Try again</button>
+          </div>
+
+          <p v-else-if="tags.length === 0">No tags are available yet.</p>
+
+          <TagList v-else :tags="tags" linked />
         </aside>
       </div>
     </section>
   </main>
 </template>
+
+<style scoped>
+.feed-toggle {
+  gap: 1rem;
+}
+
+.sidebar-error {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sidebar-error button {
+  width: fit-content;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--conduit-green-dark);
+  border-radius: 0.35rem;
+  color: var(--conduit-green-dark);
+  background: transparent;
+  cursor: pointer;
+}
+</style>

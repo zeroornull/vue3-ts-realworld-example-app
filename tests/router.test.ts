@@ -28,6 +28,14 @@ describe('router skeleton', () => {
     })
   })
 
+  it('resolves tag feeds with their page query', () => {
+    expect(router.resolve('/tag/vue?page=3')).toMatchObject({
+      name: 'tag',
+      params: { tag: 'vue' },
+      query: { page: '3' },
+    })
+  })
+
   it('marks settings and editor as protected routes', () => {
     expect(router.resolve('/settings').meta.requiresAuth).toBe(true)
     expect(router.resolve('/editor').meta.requiresAuth).toBe(true)
