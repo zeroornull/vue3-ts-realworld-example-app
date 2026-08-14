@@ -1,7 +1,7 @@
 import { API_URL } from '../config'
 import { ApiError, ConnectivityError } from './errors'
 
-type HttpMethod = 'GET' | 'POST' | 'DELETE'
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 export type RequestOptions = {
   method?: HttpMethod

@@ -39,5 +39,10 @@ describe('router skeleton', () => {
   it('marks settings and editor as protected routes', () => {
     expect(router.resolve('/settings').meta.requiresAuth).toBe(true)
     expect(router.resolve('/editor').meta.requiresAuth).toBe(true)
+    expect(router.resolve('/editor/example-slug')).toMatchObject({
+      name: 'article-edit',
+      params: { slug: 'example-slug' },
+    })
+    expect(router.resolve('/editor/example-slug').meta.requiresAuth).toBe(true)
   })
 })

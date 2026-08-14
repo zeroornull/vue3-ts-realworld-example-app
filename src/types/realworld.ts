@@ -35,6 +35,13 @@ export type Article = ArticleSummary & {
   body: string
 }
 
+export type ArticleDraft = {
+  title: string
+  description: string
+  body: string
+  tagList: string[]
+}
+
 export type ArticlesResponse = {
   articles: ArticleSummary[]
   articlesCount: number

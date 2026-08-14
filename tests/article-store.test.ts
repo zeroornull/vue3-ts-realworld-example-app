@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { createPinia, setActivePinia } from 'pinia'
 import { useArticleStore } from '../src/stores/article'
 import { useHomeStore } from '../src/stores/home'
-import type { Article, Comment } from '../src/types/realworld'
+import { toApiErrors } from '../src/services/errors'
+import type {
+  Article,
+  ArticleDraft,
+  ArticleSummary,
+  Comment,
+} from '../src/types/realworld'
 
 const originalFetch = globalThis.fetch
 
@@ -35,6 +41,13 @@ const demoComment: Comment = {
     image: null,
     following: false,
   },
+}
+
+const demoDraft: ArticleDraft = {
+  title: 'Article lifecycle',
+  description: 'Create, edit, and delete one article.',
+  body: '# Write safely',
+  tagList: ['vue', 'bun'],
 }
 
 beforeEach(() => {
@@ -234,5 +247,173 @@ describe('article favorites store', () => {
 
     expect(articleStore.article?.favorited).toBe(false)
     expect(homeStore.articles[0]?.favorited).toBe(false)
+  })
+})
+
+describe('article lifecycle store', () => {
+  it('publishes a normalized draft and stores the created article', async () => {
+    const articleStore = useArticleStore()
+    let requestBody: BodyInit | null | undefined
+
+    globalThis.fetch = (async (_input, init) => {
+      requestBody = init?.body
+      return Response.json({ article: demoArticle })
+    }) as typeof fetch
+
+    const created = await articleStore.publishArticle(
+      {
+        title: `  ${demoDraft.title}  `,
+        description: ` ${demoDraft.description} `,
+        body: ` ${demoDraft.body} `,
+        tagList: [' vue ', '', 'bun', 'vue'],
+      },
+      'saved-token',
+    )
+
+    expect(JSON.parse(String(requestBody))).toEqual({
+      article: demoDraft,
+    })
+    expect(created).toEqual(demoArticle)
+    expect(articleStore.article).toEqual(demoArticle)
+    expect(articleStore.status).toBe('success')
+  })
+
+  it('rejects missing required fields without making a request', async () => {
+    const articleStore = useArticleStore()
+    let requestCount = 0
+
+    globalThis.fetch = (async () => {
+      requestCount += 1
+      return Response.json({ article: demoArticle })
+    }) as typeof fetch
+
+    await expect(
+      articleStore.publishArticle(
+        { title: ' ', description: '', body: '\n', tagList: [] },
+        'saved-token',
+      ),
+    ).rejects.toMatchObject({
+      errors: {
+        title: ['cannot be blank'],
+        description: ['cannot be blank'],
+        body: ['cannot be blank'],
+      },
+    })
+    expect(requestCount).toBe(0)
+  })
+
+  it('edits the detail and matching Home article even when the slug changes', async () => {
+    const articleStore = useArticleStore()
+    const homeStore = useHomeStore()
+    const editedArticle: Article = {
+      ...demoArticle,
+      slug: 'article-lifecycle',
+      title: 'Article lifecycle',
+      description: demoDraft.description,
+      body: demoDraft.body,
+      tagList: [...demoDraft.tagList],
+    }
+    const editedSummary: ArticleSummary = {
+      slug: editedArticle.slug,
+      title: editedArticle.title,
+      description: editedArticle.description,
+      tagList: [...editedArticle.tagList],
+      createdAt: editedArticle.createdAt,
+      updatedAt: editedArticle.updatedAt,
+      favorited: editedArticle.favorited,
+      favoritesCount: editedArticle.favoritesCount,
+      author: { ...editedArticle.author },
+    }
+
+    articleStore.article = { ...demoArticle }
+    homeStore.articles = [{ ...demoArticle }]
+    homeStore.articlesCount = 1
+    globalThis.fetch = (async () =>
+      Response.json({ article: editedArticle })) as typeof fetch
+
+    const updated = await articleStore.editArticle(
+      demoArticle.slug,
+      demoDraft,
+      'saved-token',
+    )
+
+    expect(updated).toEqual(editedArticle)
+    expect(articleStore.article).toEqual(editedArticle)
+    expect(homeStore.articles).toHaveLength(1)
+    expect(homeStore.articles[0]).toEqual(editedSummary)
+    expect(homeStore.articles[0]).not.toHaveProperty('body')
+    expect(homeStore.articlesCount).toBe(1)
+  })
+
+  it('clears detail and Home state after a successful delete', async () => {
+    const articleStore = useArticleStore()
+    const homeStore = useHomeStore()
+
+    articleStore.article = { ...demoArticle }
+    articleStore.status = 'success'
+    homeStore.articles = [{ ...demoArticle }]
+    homeStore.articlesCount = 1
+    globalThis.fetch = (async () =>
+      new Response(null, { status: 204 })) as typeof fetch
+
+    await articleStore.deleteArticle(demoArticle.slug, 'saved-token')
+
+    expect(articleStore.article).toBeNull()
+    expect(articleStore.status).toBe('idle')
+    expect(homeStore.articles).toEqual([])
+    expect(homeStore.articlesCount).toBe(0)
+  })
+
+  it('surfaces API field errors without discarding the current article', async () => {
+    const articleStore = useArticleStore()
+    articleStore.article = { ...demoArticle }
+
+    globalThis.fetch = (async () =>
+      Response.json(
+        { errors: { title: ['has already been taken'] } },
+        { status: 422 },
+      )) as typeof fetch
+
+    let receivedError: unknown
+
+    try {
+      await articleStore.editArticle(demoArticle.slug, demoDraft, 'saved-token')
+    } catch (error: unknown) {
+      receivedError = error
+    }
+
+    expect(toApiErrors(receivedError)).toEqual({
+      title: ['has already been taken'],
+    })
+    expect(articleStore.article).toEqual(demoArticle)
+  })
+
+  it('rejects malformed mutation responses without changing detail state', async () => {
+    const articleStore = useArticleStore()
+    articleStore.article = { ...demoArticle }
+
+    globalThis.fetch = (async () =>
+      Response.json({
+        article: { ...demoArticle, body: null },
+      })) as typeof fetch
+
+    await expect(
+      articleStore.editArticle(demoArticle.slug, demoDraft, 'saved-token'),
+    ).rejects.toThrow('empty or malformed response')
+    expect(articleStore.article).toEqual(demoArticle)
+  })
+
+  it('preserves the current article when an update cannot connect', async () => {
+    const articleStore = useArticleStore()
+    articleStore.article = { ...demoArticle }
+
+    globalThis.fetch = (async () => {
+      throw new TypeError('network unavailable')
+    }) as typeof fetch
+
+    await expect(
+      articleStore.editArticle(demoArticle.slug, demoDraft, 'saved-token'),
+    ).rejects.toThrow()
+    expect(articleStore.article).toEqual(demoArticle)
   })
 })

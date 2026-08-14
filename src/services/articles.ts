@@ -1,6 +1,7 @@
 import type {
   Article,
   ArticleAuthor,
+  ArticleDraft,
   ArticleResponse,
   ArticleSummary,
   ArticlesResponse,
@@ -150,6 +151,39 @@ export function getArticle(
   token: string | null = null,
 ): Promise<unknown | null> {
   return request<unknown>(`articles/${encodeURIComponent(slug)}`, { token })
+}
+
+export function createArticle(
+  draft: ArticleDraft,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>('articles', {
+    method: 'POST',
+    token,
+    body: { article: draft },
+  })
+}
+
+export function updateArticle(
+  slug: string,
+  draft: ArticleDraft,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}`, {
+    method: 'PUT',
+    token,
+    body: { article: draft },
+  })
+}
+
+export function deleteArticle(
+  slug: string,
+  token: string,
+): Promise<unknown | null> {
+  return request<unknown>(`articles/${encodeURIComponent(slug)}`, {
+    method: 'DELETE',
+    token,
+  })
 }
 
 export function getArticleComments(

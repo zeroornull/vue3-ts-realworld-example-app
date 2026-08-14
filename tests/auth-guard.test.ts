@@ -29,6 +29,12 @@ function createGuardedRouter(pinia: Pinia): Router {
         component: StubView,
         meta: { requiresAuth: true },
       },
+      {
+        path: '/editor/:slug?',
+        name: 'article-edit',
+        component: StubView,
+        meta: { requiresAuth: true },
+      },
     ],
   })
 
@@ -57,6 +63,18 @@ describe('auth route guard', () => {
     await router.push('/settings')
 
     expect(router.currentRoute.value.fullPath).toBe('/login?redirect=/settings')
+  })
+
+  it('protects both new and existing article editor routes', async () => {
+    const router = createGuardedRouter(createPinia())
+
+    await router.push('/editor')
+    expect(router.currentRoute.value.fullPath).toBe('/login?redirect=/editor')
+
+    await router.push('/editor/example-slug')
+    expect(router.currentRoute.value.fullPath).toBe(
+      '/login?redirect=/editor/example-slug',
+    )
   })
 
   it('waits for saved-session restoration before entering settings', async () => {

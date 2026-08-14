@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–10 已完成；文章详情支持评论读取、发布、删除和收藏切换，并同步详情与 Home 列表状态，下一步进入迭代 11 创建、编辑和删除文章。
+> 当前状态：迭代 1–11 已完成；现在可以创建、编辑和删除文章，作者操作、编辑路由、字段错误和 Home 列表同步已经接通，下一步进入迭代 12A Profile 只读页。
 
 ## 0. 先读这几条约定
 
@@ -989,10 +989,19 @@ feat: add comments and article favorites
 ### 改哪些文件
 
 ```text
+src/types/realworld.ts
+src/services/api.ts
+src/services/articles.ts
 src/views/ArticleEdit.vue
 src/stores/article.ts
+src/stores/home.ts
+src/components/ArticleActions.vue
 src/components/ListErrors.vue
 src/router/index.ts
+tests/article-lifecycle-service.test.ts
+tests/article-store.test.ts
+tests/router.test.ts
+tests/auth-guard.test.ts
 ```
 
 ### API
@@ -1014,13 +1023,24 @@ DELETE /articles/:slug
 
 ### 测试和验收
 
-- [ ] 必填字段缺失时不能提交；
-- [ ] 新建调用 POST，编辑调用 PUT；
-- [ ] 成功后跳转详情；
-- [ ] 删除后返回首页；
-- [ ] API 字段错误可见；
-- [ ] 未认证访问 editor 被守卫拦截；
-- [ ] 连续点击不会产生重复提交。
+- [x] 必填字段缺失时不能提交；
+- [x] 新建调用 POST，编辑调用 PUT；
+- [x] 成功后跳转详情；
+- [x] 删除后返回首页；
+- [x] API 字段错误可见；
+- [x] 未认证访问 editor 被守卫拦截；
+- [x] 连续点击不会产生重复提交。
+
+### 本轮落地记录
+
+- `/editor` 和 `/editor/:slug` 复用同一个 TypeScript 表单，编辑模式会先读取文章并生成独立 `ArticleDraft`；
+- store 统一裁剪必填字段、过滤空标签并去重，校验失败不会发起请求；
+- 作者在详情页看到 `Edit Article` 和 `Delete Article`，其他用户继续看到收藏操作；
+- 创建和编辑成功后进入最新 slug 的详情页，删除成功后回首页；
+- 更新或删除文章时同步 Home 已存在的列表项，但不会把详情 `body` 写入摘要列表；
+- POST、PUT、DELETE、204、422、异常响应、网络失败和编辑路由保护均有 Bun 回归测试。
+
+验收记录（2026-08-14）：`bun run check`、93 个 Bun 测试和 `bun run build` 全部通过；浏览器使用本地 mock API 验证了未登录守卫、空字段拦截、422 错误、双击只创建一次、编辑预填与 PUT、删除 204 后回首页，控制台无错误。
 
 ### 练习
 

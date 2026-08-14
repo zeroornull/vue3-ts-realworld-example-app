@@ -31,8 +31,14 @@ export type HomeState = {
 
 function cloneArticle(article: ArticleSummary): ArticleSummary {
   return {
-    ...article,
+    slug: article.slug,
+    title: article.title,
+    description: article.description,
     tagList: [...article.tagList],
+    createdAt: article.createdAt,
+    updatedAt: article.updatedAt,
+    favorited: article.favorited,
+    favoritesCount: article.favoritesCount,
     author: { ...article.author },
   }
 }
@@ -70,6 +76,33 @@ export const useHomeStore = defineStore('home', {
   },
 
   actions: {
+    updateArticleInList(
+      article: ArticleSummary,
+      previousSlug: string = article.slug,
+    ): void {
+      const index = this.articles.findIndex(
+        (current) =>
+          current.slug === previousSlug || current.slug === article.slug,
+      )
+
+      if (index < 0) {
+        return
+      }
+
+      this.articles[index] = cloneArticle(article)
+    },
+
+    removeArticleFromList(slug: string): void {
+      const index = this.articles.findIndex((article) => article.slug === slug)
+
+      if (index < 0) {
+        return
+      }
+
+      this.articles.splice(index, 1)
+      this.articlesCount = Math.max(0, this.articlesCount - 1)
+    },
+
     updateArticleFavorite(
       article: Pick<ArticleSummary, 'slug' | 'favorited' | 'favoritesCount'>,
     ): void {

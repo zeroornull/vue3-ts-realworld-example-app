@@ -195,6 +195,14 @@ watch([() => props.slug, token], loadArticle, { immediate: true })
   background: #9ed99e;
 }
 
+.article-banner :deep(.edit-button) {
+  color: #9ed99e;
+}
+
+.article-banner :deep(.delete-button) {
+  color: #ffb4ab;
+}
+
 .article-banner :deep(.author),
 .article-banner :deep(.favorite-count) {
   color: #9ed99e;

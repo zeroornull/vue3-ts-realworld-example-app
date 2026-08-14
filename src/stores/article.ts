@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import {
   addArticleFavorite,
+  createArticle,
   createArticleComment,
+  deleteArticle as deleteArticleRequest,
   deleteArticleComment,
   getArticle,
   getArticleComments,
@@ -9,6 +11,7 @@ import {
   isCommentResponse,
   isCommentsResponse,
   removeArticleFavorite,
+  updateArticle,
 } from '../services/articles'
 import {
   ApiError,
@@ -16,7 +19,12 @@ import {
   UnexpectedResponseError,
   ValidationError,
 } from '../services/errors'
-import type { Article, Comment } from '../types/realworld'
+import type {
+  ApiErrors,
+  Article,
+  ArticleDraft,
+  Comment,
+} from '../types/realworld'
 import { useHomeStore } from './home'
 
 export type ArticleStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -94,6 +102,36 @@ function requireToken(token: string | null, action: string): string {
   return token
 }
 
+function normalizeArticleDraft(draft: ArticleDraft): ArticleDraft {
+  const normalized: ArticleDraft = {
+    title: draft.title.trim(),
+    description: draft.description.trim(),
+    body: draft.body.trim(),
+    tagList: [
+      ...new Set(draft.tagList.map((tag) => tag.trim()).filter(Boolean)),
+    ],
+  }
+  const errors: ApiErrors = {}
+
+  if (!normalized.title) {
+    errors.title = ['cannot be blank']
+  }
+
+  if (!normalized.description) {
+    errors.description = ['cannot be blank']
+  }
+
+  if (!normalized.body) {
+    errors.body = ['cannot be blank']
+  }
+
+  if (Object.keys(errors).length > 0) {
+    throw new ValidationError('Article fields cannot be blank', errors)
+  }
+
+  return normalized
+}
+
 export const useArticleStore = defineStore('article', {
   state: (): ArticleState => ({
     status: 'idle',
@@ -108,6 +146,66 @@ export const useArticleStore = defineStore('article', {
   }),
 
   actions: {
+    async publishArticle(
+      draft: ArticleDraft,
+      token: string | null,
+    ): Promise<Article> {
+      const normalizedDraft = normalizeArticleDraft(draft)
+      const sessionToken = requireToken(token, 'publish an article')
+      const response = await createArticle(normalizedDraft, sessionToken)
+
+      if (!isArticleResponse(response)) {
+        throw new UnexpectedResponseError('POST articles')
+      }
+
+      const publishedArticle = cloneArticle(response.article)
+      this.article = publishedArticle
+      this.status = 'success'
+      this.error = null
+      return cloneArticle(publishedArticle)
+    },
+
+    async editArticle(
+      slug: string,
+      draft: ArticleDraft,
+      token: string | null,
+    ): Promise<Article> {
+      const normalizedDraft = normalizeArticleDraft(draft)
+      const sessionToken = requireToken(token, 'edit an article')
+      const response = await updateArticle(slug, normalizedDraft, sessionToken)
+
+      if (!isArticleResponse(response)) {
+        throw new UnexpectedResponseError('PUT articles/:slug')
+      }
+
+      const updatedArticle = cloneArticle(response.article)
+      useHomeStore().updateArticleInList(updatedArticle, slug)
+      this.article = updatedArticle
+      this.status = 'success'
+      this.error = null
+      return cloneArticle(updatedArticle)
+    },
+
+    async deleteArticle(slug: string, token: string | null): Promise<void> {
+      const sessionToken = requireToken(token, 'delete an article')
+
+      await deleteArticleRequest(slug, sessionToken)
+      useHomeStore().removeArticleFromList(slug)
+
+      if (this.article?.slug === slug) {
+        this.article = null
+        this.status = 'idle'
+        this.error = null
+      }
+
+      if (this.commentsSlug === slug) {
+        this.comments = []
+        this.commentsStatus = 'idle'
+        this.commentsError = null
+        this.commentsSlug = null
+      }
+    },
+
     async fetchArticle(
       slug: string,
       token: string | null = null,

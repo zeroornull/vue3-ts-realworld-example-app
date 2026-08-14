@@ -34,9 +34,10 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/editor',
+    path: '/editor/:slug?',
     name: 'article-edit',
     component: () => import('../views/ArticleEdit.vue'),
+    props: true,
     meta: { requiresAuth: true },
   },
   {
