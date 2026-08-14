@@ -173,6 +173,70 @@ describe('profile article feed store', () => {
     expect(profileStore.articlesCount).toBe(0)
   })
 
+  it('stores a valid favorited feed from the favorited query', async () => {
+    const profileStore = useProfileStore()
+    let requestUrl = ''
+    const favoritedArticle: ArticleSummary = {
+      ...demoArticle,
+      slug: 'alice-favorite',
+      title: 'Alice favorite',
+      favorited: true,
+    }
+
+    globalThis.fetch = (async (input) => {
+      requestUrl = String(input)
+      return Response.json({
+        articles: [favoritedArticle],
+        articlesCount: 1,
+      })
+    }) as typeof fetch
+
+    await profileStore.fetchFavoritedArticles(
+      'alice',
+      articlesQuery,
+      'saved-token',
+    )
+
+    expect(requestUrl).toEndWith('/articles?limit=10&offset=0&favorited=alice')
+    expect(profileStore.articlesStatus).toBe('success')
+    expect(profileStore.articles).toEqual([favoritedArticle])
+    expect(profileStore.articlesCount).toBe(1)
+  })
+
+  it('keeps only the latest tab response when feed requests overlap', async () => {
+    const profileStore = useProfileStore()
+    const favoritedArticle: ArticleSummary = {
+      ...demoArticle,
+      slug: 'latest-favorite',
+      title: 'Latest favorite',
+      favorited: true,
+    }
+
+    globalThis.fetch = (async (input) => {
+      if (String(input).includes('author=alice')) {
+        await Bun.sleep(25)
+        return Response.json({ articles: [demoArticle], articlesCount: 1 })
+      }
+
+      await Bun.sleep(5)
+      return Response.json({
+        articles: [favoritedArticle],
+        articlesCount: 1,
+      })
+    }) as typeof fetch
+
+    const authoredRequest = profileStore.fetchArticles('alice', articlesQuery)
+    const favoritedRequest = profileStore.fetchFavoritedArticles(
+      'alice',
+      articlesQuery,
+    )
+
+    await Promise.all([authoredRequest, favoritedRequest])
+
+    expect(profileStore.articles).toEqual([favoritedArticle])
+    expect(profileStore.articlesStatus).toBe('success')
+  })
+
   it('keeps a loaded profile visible when its article feed fails', async () => {
     const profileStore = useProfileStore()
     profileStore.profile = { ...demoProfile }

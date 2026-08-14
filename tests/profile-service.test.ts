@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { API_URL } from '../src/config'
-import { getProfileArticles } from '../src/services/articles'
+import {
+  getFavoritedArticles,
+  getProfileArticles,
+} from '../src/services/articles'
 import {
   getProfile,
   isProfile,
@@ -58,6 +61,30 @@ describe('profile service', () => {
 
     expect(String(requestInput)).toBe(
       `${API_URL}/articles?limit=10&offset=10&author=alice+example`,
+    )
+    expect(new Headers(requestInit?.headers).get('Authorization')).toBe(
+      'Token saved-token',
+    )
+  })
+
+  it('gets one favorited feed with pagination and authentication', async () => {
+    let requestInput: string | URL | Request = ''
+    let requestInit: RequestInit | undefined
+
+    globalThis.fetch = (async (input, init) => {
+      requestInput = input
+      requestInit = init
+      return Response.json({ articles: [], articlesCount: 0 })
+    }) as typeof fetch
+
+    await getFavoritedArticles(
+      'alice example',
+      { limit: 10, offset: 20 },
+      'saved-token',
+    )
+
+    expect(String(requestInput)).toBe(
+      `${API_URL}/articles?limit=10&offset=20&favorited=alice+example`,
     )
     expect(new Headers(requestInit?.headers).get('Authorization')).toBe(
       'Token saved-token',

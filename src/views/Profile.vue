@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
-import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
+import {
+  RouterLink,
+  useRoute,
+  useRouter,
+  type LocationQueryRaw,
+} from 'vue-router'
 import ArticleList from '../components/ArticleList.vue'
 import { createArticlesQuery, parseFeedPage } from '../router/feed-query'
 import { useAuthStore } from '../stores/auth'
@@ -29,21 +34,40 @@ const {
 } = storeToRefs(profileStore)
 
 const currentPage = computed(() => parseFeedPage(route.query.page))
+const showFavorited = computed(() => route.name === 'profile-favorites')
 const articlesQuery = computed(() =>
   createArticlesQuery(currentPage.value, null),
 )
 const avatarUrl = computed(() => profile.value?.image?.trim() || DEFAULT_AVATAR)
+const articlesTitle = computed(() =>
+  showFavorited.value
+    ? `Articles favorited by ${props.username}`
+    : `Articles by ${props.username}`,
+)
+const emptyArticlesMessage = computed(() =>
+  showFavorited.value
+    ? `${props.username} has not favorited any articles yet.`
+    : `No articles published by ${props.username} yet.`,
+)
 
 function loadProfile(): void {
   void profileStore.fetchProfile(props.username, token.value)
 }
 
 function loadArticles(): void {
-  void profileStore.fetchArticles(
-    props.username,
-    articlesQuery.value,
-    token.value,
-  )
+  if (showFavorited.value) {
+    void profileStore.fetchFavoritedArticles(
+      props.username,
+      articlesQuery.value,
+      token.value,
+    )
+  } else {
+    void profileStore.fetchArticles(
+      props.username,
+      articlesQuery.value,
+      token.value,
+    )
+  }
 }
 
 function selectPage(page: number): void {
@@ -70,9 +94,13 @@ function showDefaultAvatar(event: Event): void {
 }
 
 watch([() => props.username, token], loadProfile, { immediate: true })
-watch([() => props.username, articlesQuery, token], loadArticles, {
-  immediate: true,
-})
+watch(
+  [() => props.username, articlesQuery, token, showFavorited],
+  loadArticles,
+  {
+    immediate: true,
+  },
+)
 </script>
 
 <template>
@@ -114,11 +142,26 @@ watch([() => props.username, articlesQuery, token], loadArticles, {
       >
         <div class="feed-card">
           <nav class="feed-toggle" aria-label="Profile feeds">
-            <span class="nav-link active">My Articles</span>
+            <RouterLink
+              class="nav-link"
+              :class="{ active: !showFavorited }"
+              :aria-current="!showFavorited ? 'page' : undefined"
+              :to="{ name: 'profile', params: { username } }"
+            >
+              My Articles
+            </RouterLink>
+            <RouterLink
+              class="nav-link"
+              :class="{ active: showFavorited }"
+              :aria-current="showFavorited ? 'page' : undefined"
+              :to="{ name: 'profile-favorites', params: { username } }"
+            >
+              Favorited Articles
+            </RouterLink>
           </nav>
 
           <div class="feed-header">
-            <h2 id="articles-title">Articles by {{ profile.username }}</h2>
+            <h2 id="articles-title">{{ articlesTitle }}</h2>
             <span v-if="articlesStatus === 'success'">
               {{ articlesCount }} articles
             </span>
@@ -132,7 +175,7 @@ watch([() => props.username, articlesQuery, token], loadArticles, {
             :articles-count="articlesCount"
             :current-page="currentPage"
             :error="articlesError"
-            :empty-message="`No articles published by ${profile.username} yet.`"
+            :empty-message="emptyArticlesMessage"
             @retry="loadArticles"
             @update:current-page="selectPage"
           />

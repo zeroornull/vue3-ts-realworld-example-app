@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–12A 已完成；Profile 只读信息、默认头像、作者文章列表、分页、404 和路由参数变化已经接通，下一步进入迭代 12B Favorited Articles。
+> 当前状态：迭代 1–12B 已完成；Profile 支持 My Articles 与 Favorited Articles 双标签页，两种列表都能分页、直达和刷新恢复，下一步进入迭代 12C Follow/Unfollow。
 
 ## 0. 先读这几条约定
 
@@ -1095,9 +1095,16 @@ feat: add read only user profiles
 
 ### 12B：Favorited Articles
 
-1. 添加 `/profile/:username/favorites`；
-2. 根据 route name 切换文章/收藏 tab；
-3. 复用列表和分页，不复制第二套组件。
+1. [x] 添加 `/profile/:username/favorites`；
+2. [x] 根据 route name 切换文章/收藏 tab；
+3. [x] 复用列表和分页，不复制第二套组件。
+
+本轮实现记录：
+
+- `ArticlesQuery` 增加 `favorited` 过滤条件，并保留可选 Token；
+- `profile` store 复用同一份文章状态，根据 tab 请求 `author` 或 `favorited`；
+- 两个 tab 使用 route name 作为唯一状态来源，切换 tab 时自动清除旧分页 query；
+- 收藏列表沿用 `ArticleList`、分页、loading、空态、错误态和 request id，未复制第二套列表。
 
 推荐提交：
 
@@ -1160,7 +1167,7 @@ GET /articles/feed
 
 ### 测试和验收
 
-- [ ] profile 和 favorites 路径可访问、可刷新；
+- [x] profile 和 favorites 路径可访问、可刷新；
 - [x] profile 不存在时不是白屏；
 - [x] profile 获取最多重试两次、间隔 400ms（若保留源行为）；
 - [ ] Follow/Unfollow 请求和按钮文字正确；
@@ -1170,6 +1177,8 @@ GET /articles/feed
 - [x] `image: null` 或空字符串使用默认头像。
 
 12A 验收记录（2026-08-14）：`bun run check`、Bun 全量测试和 `bun run build` 通过；浏览器验证了公开 Profile、默认头像、12 篇文章分页、空文章用户、404 重试后错误页和路由用户名变化，正常路径控制台无错误。
+
+12B 验收记录（2026-08-14）：`bun run check`、108 个 Bun 测试和 `bun run build` 通过；浏览器验证了 My Articles/Favorited Articles 切换、收藏列表分页、`/profile/:username/favorites?page=2` 刷新恢复、返回作者文章时重置分页和空收藏状态，控制台无错误。
 
 ### 练习
 

@@ -21,6 +21,12 @@ describe('router skeleton', () => {
       params: { username: 'alice' },
       query: { page: '2' },
     })
+
+    expect(router.resolve('/profile/alice/favorites?page=3')).toMatchObject({
+      name: 'profile-favorites',
+      params: { username: 'alice' },
+      query: { page: '3' },
+    })
   })
 
   it('keeps home query parameters and catches unknown paths', () => {

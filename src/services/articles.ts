@@ -16,6 +16,7 @@ export type ArticlesQuery = {
   offset: number
   tag?: string
   author?: string
+  favorited?: string
 }
 
 function createArticlesSearch(query: ArticlesQuery): URLSearchParams {
@@ -30,6 +31,10 @@ function createArticlesSearch(query: ArticlesQuery): URLSearchParams {
 
   if (query.author) {
     search.set('author', query.author)
+  }
+
+  if (query.favorited) {
+    search.set('favorited', query.favorited)
   }
 
   return search
@@ -153,11 +158,22 @@ export function getUserFeed(
 
 export function getProfileArticles(
   username: string,
-  query: Omit<ArticlesQuery, 'author'>,
+  query: Omit<ArticlesQuery, 'author' | 'favorited'>,
   token: string | null = null,
 ): Promise<unknown | null> {
   return request<unknown>(
     `articles?${createArticlesSearch({ ...query, author: username })}`,
+    { token },
+  )
+}
+
+export function getFavoritedArticles(
+  username: string,
+  query: Omit<ArticlesQuery, 'author' | 'favorited'>,
+  token: string | null = null,
+): Promise<unknown | null> {
+  return request<unknown>(
+    `articles?${createArticlesSearch({ ...query, favorited: username })}`,
     { token },
   )
 }

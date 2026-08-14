@@ -67,7 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 12A · Read-only user profiles.</div>
+      <div class="container">Iteration 12B · Favorited article profiles.</div>
     </footer>
   </div>
 </template>

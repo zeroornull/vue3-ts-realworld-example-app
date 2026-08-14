@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import {
+  getFavoritedArticles,
   getProfileArticles,
   isArticlesResponse,
   type ArticlesQuery,
@@ -13,6 +14,7 @@ import { getProfile, isProfileResponse } from '../services/profiles'
 import type { ArticleSummary, Profile } from '../types/realworld'
 
 export type ProfileStatus = 'idle' | 'loading' | 'success' | 'error'
+export type ProfileArticlesSource = 'authored' | 'favorited'
 
 const PROFILE_FETCH_RETRIES = 2
 const PROFILE_FETCH_RETRY_DELAY_MS = 400
@@ -152,8 +154,9 @@ export const useProfileStore = defineStore('profile', {
 
     async fetchArticles(
       username: string,
-      query: Omit<ArticlesQuery, 'author'>,
+      query: Omit<ArticlesQuery, 'author' | 'favorited'>,
       token: string | null = null,
+      source: ProfileArticlesSource = 'authored',
     ): Promise<void> {
       const requestId = ++this.articlesRequestId
       this.articlesStatus = 'loading'
@@ -162,14 +165,21 @@ export const useProfileStore = defineStore('profile', {
       this.articlesError = null
 
       try {
-        const response = await getProfileArticles(username, query, token)
+        const response =
+          source === 'favorited'
+            ? await getFavoritedArticles(username, query, token)
+            : await getProfileArticles(username, query, token)
 
         if (requestId !== this.articlesRequestId) {
           return
         }
 
         if (!isArticlesResponse(response)) {
-          throw new UnexpectedResponseError('GET articles?author=:username')
+          throw new UnexpectedResponseError(
+            source === 'favorited'
+              ? 'GET articles?favorited=:username'
+              : 'GET articles?author=:username',
+          )
         }
 
         this.articles = response.articles.map(cloneArticle)
@@ -185,6 +195,14 @@ export const useProfileStore = defineStore('profile', {
         this.articlesError = toArticlesErrorMessage(error)
         this.articlesStatus = 'error'
       }
+    },
+
+    async fetchFavoritedArticles(
+      username: string,
+      query: Omit<ArticlesQuery, 'author' | 'favorited'>,
+      token: string | null = null,
+    ): Promise<void> {
+      await this.fetchArticles(username, query, token, 'favorited')
     },
   },
 })
