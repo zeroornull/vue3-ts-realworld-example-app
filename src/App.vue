@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15E · Official E2E gap analysis.</div>
+      <div class="container">Iteration 15F · Article lifecycle E2E.</div>
     </footer>
   </div>
 </template>

@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15E 已完成；Playwright 已覆盖导航、认证、文章交互、Profile 和 Settings，官方套件已完成只发现盘点，下一步进入迭代 15F。
+> 当前状态：迭代 1–14、15A–15F 已完成；Playwright 已覆盖导航、认证、文章交互、文章生命周期、Profile 和 Settings，下一步进入迭代 15G。
 
 ## 0. 先读这几条约定
 
@@ -1490,7 +1490,7 @@ export default defineConfig({
 
 | 官方 spec                                              | 测试数 | 当前状态                                              | 下一步                           |
 | ------------------------------------------------------ | -----: | ----------------------------------------------------- | -------------------------------- |
-| `articles.spec.ts`                                     |     10 | 已覆盖渲染、收藏；创建/编辑/删除和标签编辑仍缺        | 15F 先补文章写入边界             |
+| `articles.spec.ts`                                     |     10 | 已覆盖渲染、收藏和创建/编辑/删除主流程；权限边界仍缺  | 后续补文章异常与权限边界         |
 | `auth.spec.ts`                                         |      8 | 已覆盖登录、注册、会话恢复；错误登录和无效 Token 缺   | 15F 与错误态一起补               |
 | `comments.spec.ts`                                     |      9 | 已覆盖新增、删除、Token；长文本、刷新保留和权限边界缺 | 后续补充                         |
 | `navigation.spec.ts` + `url-navigation.spec.ts`        |     23 | 已覆盖基础导航；标签、分页、Your Feed URL 契约缺      | 后续补充                         |
@@ -1508,6 +1508,16 @@ export default defineConfig({
 - `tests/realworld-contract.test.ts` 增加配置隔离契约，防止把官方套件误并入默认 `bun run test:e2e`。
 
 15E 验收记录（2026-08-15）：`bun run test:e2e:official:list` 发现 139 个测试、12 个官方 spec 文件；7 个 RealWorld 契约单测通过，未执行官方测试主体，也未触碰公共 API 数据。当前官方完整 E2E 和 security 仍是明确未运行状态。
+
+15F 实现记录：
+
+- 新增 `tests/e2e/article-lifecycle.spec.ts`，继续使用隔离的 Playwright API mock；
+- 创建测试验证 `POST /api/articles`、标准 Article payload、Token，以及跳转到新文章详情；
+- 编辑测试验证 `PUT /api/articles/:slug`、读取旧草稿、移除旧标签、写入新标签，以及 slug 变化后的跳转；
+- 删除测试验证作者可见的 `Delete Article`、204 响应、Token 和返回 Global Feed；
+- 3 个路径均复用了现有 Article/ArticleEdit 实现，本轮没有新增业务抽象。
+
+15F 验收记录（2026-08-15）：新增 3 个文章生命周期 E2E，Playwright Chromium 累计 15 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实际创建文章并验证 POST payload、认证头、详情跳转和安全 Token 展示，控制台无错误。官方文章权限、异常响应和标签编辑完整套件仍未运行。
 
 ### 推荐提交
 
