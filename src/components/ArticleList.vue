@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ARTICLES_PER_PAGE, createPaginationPages } from '../router/feed-query'
-import type { HomeStatus } from '../stores/home'
 import type { ArticleSummary } from '../types/realworld'
 import ArticlePreview from './ArticlePreview.vue'
 import VPagination from './VPagination.vue'
 
+type ArticleListStatus = 'idle' | 'loading' | 'success' | 'error'
+
 const props = defineProps<{
-  status: HomeStatus
+  status: ArticleListStatus
   articles: ArticleSummary[]
   articlesCount: number
   currentPage: number

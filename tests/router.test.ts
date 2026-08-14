@@ -15,6 +15,12 @@ describe('router skeleton', () => {
       name: 'profile',
       params: { username: 'alice' },
     })
+
+    expect(router.resolve('/profile/alice?page=2')).toMatchObject({
+      name: 'profile',
+      params: { username: 'alice' },
+      query: { page: '2' },
+    })
   })
 
   it('keeps home query parameters and catches unknown paths', () => {

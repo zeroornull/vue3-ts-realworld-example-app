@@ -15,6 +15,7 @@ export type ArticlesQuery = {
   limit: number
   offset: number
   tag?: string
+  author?: string
 }
 
 function createArticlesSearch(query: ArticlesQuery): URLSearchParams {
@@ -25,6 +26,10 @@ function createArticlesSearch(query: ArticlesQuery): URLSearchParams {
 
   if (query.tag) {
     search.set('tag', query.tag)
+  }
+
+  if (query.author) {
+    search.set('author', query.author)
   }
 
   return search
@@ -144,6 +149,17 @@ export function getUserFeed(
   return request<unknown>(`articles/feed?${createArticlesSearch(query)}`, {
     token,
   })
+}
+
+export function getProfileArticles(
+  username: string,
+  query: Omit<ArticlesQuery, 'author'>,
+  token: string | null = null,
+): Promise<unknown | null> {
+  return request<unknown>(
+    `articles?${createArticlesSearch({ ...query, author: username })}`,
+    { token },
+  )
 }
 
 export function getArticle(

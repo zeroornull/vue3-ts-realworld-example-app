@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–11 已完成；现在可以创建、编辑和删除文章，作者操作、编辑路由、字段错误和 Home 列表同步已经接通，下一步进入迭代 12A Profile 只读页。
+> 当前状态：迭代 1–12A 已完成；Profile 只读信息、默认头像、作者文章列表、分页、404 和路由参数变化已经接通，下一步进入迭代 12B Favorited Articles。
 
 ## 0. 先读这几条约定
 
@@ -1074,10 +1074,18 @@ Profile 会复用文章列表、分页和认证状态，适合练习“组合已
 
 ### 12A：只读 Profile 和用户文章
 
-1. 请求 `/profiles/:username`；
-2. 渲染头像、username、bio；
-3. 复用 `ArticleList` 显示该用户的文章；
-4. 处理 profile 不存在、loading 和路由参数变化。
+1. [x] 请求 `/profiles/:username`；
+2. [x] 渲染头像、username、bio；
+3. [x] 复用 `ArticleList` 显示该用户的文章；
+4. [x] 处理 profile 不存在、loading 和路由参数变化。
+
+本轮实现记录：
+
+- 新增独立 `profile` store，Profile 和作者文章列表拥有各自的 loading、success、error 状态；
+- Profile 404 最多重试两次，每次间隔 400ms，兼容注册后短暂查不到用户的最终一致性 API；
+- `/profile/:username?page=2` 使用现有分页解析和 `ArticleList`，请求 `GET /articles?author=:username`；
+- `image: null`、空字符串或加载失败时使用 `/default-avatar.svg`；
+- request id 防止快速切换用户名时，较慢的旧请求覆盖新 Profile。
 
 推荐提交：
 
@@ -1126,8 +1134,14 @@ feat: add personalized feed and favorite sync
 ### 改哪些文件
 
 ```text
+src/types/realworld.ts
+src/services/profiles.ts
+src/services/articles.ts
 src/stores/profile.ts
 src/views/Profile.vue
+public/default-avatar.svg
+tests/profile-service.test.ts
+tests/profile-store.test.ts
 src/stores/home.ts
 src/stores/article.ts
 src/components/ArticleList.vue
@@ -1147,13 +1161,15 @@ GET /articles/feed
 ### 测试和验收
 
 - [ ] profile 和 favorites 路径可访问、可刷新；
-- [ ] profile 不存在时不是白屏；
-- [ ] profile 获取最多重试两次、间隔 400ms（若保留源行为）；
+- [x] profile 不存在时不是白屏；
+- [x] profile 获取最多重试两次、间隔 400ms（若保留源行为）；
 - [ ] Follow/Unfollow 请求和按钮文字正确；
-- [ ] Home/Article 的 favorite 状态同步；
-- [ ] Your Feed 未认证按契约跳转；
-- [ ] `.profile-page`、`.user-info`、`.user-img`、`.user-pic` 存在；
-- [ ] `image: null` 或空字符串使用默认头像。
+- [x] Home/Article 的 favorite 状态同步；
+- [x] Your Feed 未认证按契约跳转；
+- [x] `.profile-page`、`.user-info`、`.user-img`、`.user-pic` 存在；
+- [x] `image: null` 或空字符串使用默认头像。
+
+12A 验收记录（2026-08-14）：`bun run check`、Bun 全量测试和 `bun run build` 通过；浏览器验证了公开 Profile、默认头像、12 篇文章分页、空文章用户、404 重试后错误页和路由用户名变化，正常路径控制台无错误。
 
 ### 练习
 
