@@ -72,9 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">
-        Iteration 14 · RealWorld theme and DOM contract.
-      </div>
+      <div class="container">Iteration 15A · Playwright navigation smoke.</div>
     </footer>
   </div>
 </template>

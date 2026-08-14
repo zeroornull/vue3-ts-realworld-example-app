@@ -4,4 +4,4 @@
 linker = "isolated"
 
 [test]
-pathIgnorePatterns = ["realworld/**"]
+pathIgnorePatterns = ["realworld/**", "tests/e2e/**"]

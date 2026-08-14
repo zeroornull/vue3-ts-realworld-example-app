@@ -9,6 +9,7 @@
     "preview": "bun run --bun vite preview",
     "type-check": "bun run --bun vue-tsc -b",
     "test": "bun test",
+    "test:e2e": "bunx playwright test",
     "format": "bun run --bun prettier . --write",
     "format:check": "bun run --bun prettier . --check",
     "lint": "bun run --bun oxlint . && bun run --bun eslint .",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/bun": "^1.3.14",
     "@types/jsdom": "^30.0.0",
     "@vitejs/plugin-vue": "^6.0.8",

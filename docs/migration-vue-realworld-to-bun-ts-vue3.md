@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14 已完成；下一步进入迭代 15 Playwright。
+> 当前状态：迭代 1–14 和 15A 已完成；Playwright 基础与导航 smoke 已接入，下一步进入迭代 15B 认证 E2E。
 
 ## 0. 先读这几条约定
 
@@ -1415,26 +1415,45 @@ export default defineConfig({
 
 如果项目后续把 host/port 固定进 `vite.config.ts`，这里仍要与之保持一致。不要照搬源仓库的 `bun run serve`，因为当前目标仓库只有 `dev` 脚本；只有实际添加了 `serve` 别名后才能引用它。
 
+15A 先把本项目自己的最小 smoke 放在 `tests/e2e/`，因此当前配置使用 `testDir: './tests/e2e'`，并以 `bunx vite --host 127.0.0.1 --port 4173 --strictPort` 启动隔离测试服务器。等本地 smoke 稳定后，再扩展到 `realworld/specs/e2e`，不要第一次接入就同时处理全部官方用例。
+
 保留 Bun 单测 `test`，新增并确保真实存在：
 
 ```json
 {
   "test": "bun test",
-  "test:e2e": "bunx playwright test --grep-invert @security",
+  "test:e2e": "bunx playwright test"
+}
+```
+
+15A 只新增真实可运行的 `test:e2e`；在 security 用例尚未接入时，不先放置一个没有测试可执行的占位脚本。真正接入 security 用例时再增加：
+
+```json
+{
   "test:e2e:security": "bunx playwright test --grep @security"
 }
 ```
 
 ### Playwright 验收
 
-- [ ] 首页和登录 smoke 通过；
-- [ ] `playwright.config.ts` 的 `testDir`、`baseURL`、`webServer.command` 与当前脚本一致；
-- [ ] 深层路由刷新不 404；
-- [ ] 未登录受保护路由跳 `/login`；
+- [x] 首页和登录 smoke 通过；
+- [x] `playwright.config.ts` 的 `testDir`、`baseURL`、`webServer.command` 与当前脚本一致；
+- [x] 深层路由刷新不 404；
+- [x] 未登录受保护路由跳 `/login`；
 - [ ] `window.__conduit_debug__` 存在且不打印 token；
 - [ ] 普通套件与 security 套件有独立命令；
 - [ ] 官方 E2E 的通过/失败/未运行状态有真实输出记录；
 - [ ] E2E 不通过修改测试来掩盖实现缺陷。
+
+15A 实现记录：
+
+- 安装 `@playwright/test`，并通过 `bunx playwright install chromium` 安装本地 Chromium；
+- `playwright.config.ts` 复用 submodule 的 `baseConfig`，当前只执行 `tests/e2e` 下的本地 smoke；
+- 新增 3 个导航 smoke：隔离 API 的首页 DOM 契约、`/login` 直接打开和刷新、未登录访问 `/settings` 的 redirect；
+- 首页测试通过 `page.route` 返回固定 articles/tags，避免把公共 API 的稳定性混入浏览器测试；
+- `bunfig.toml` 排除 `tests/e2e/**`，Bun 单测与 Playwright 测试保持各自的运行器边界。
+
+15A 验收记录（2026-08-14）：3 个 Playwright Chromium smoke、`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 再次验证 `/login` 与 `/settings` redirect，控制台无错误。官方套件和 security 套件本轮未运行，留到后续小迭代。
 
 ### 推荐提交
 
