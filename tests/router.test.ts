@@ -40,6 +40,13 @@ describe('router skeleton', () => {
     })
   })
 
+  it('restores personalized feed state from the URL', () => {
+    expect(router.resolve('/?feed=following&page=2')).toMatchObject({
+      name: 'home',
+      query: { feed: 'following', page: '2' },
+    })
+  })
+
   it('resolves tag feeds with their page query', () => {
     expect(router.resolve('/tag/vue?page=3')).toMatchObject({
       name: 'tag',

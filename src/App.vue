@@ -67,7 +67,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 12C · Profile follow actions.</div>
+      <div class="container">Iteration 12D · Personalized feed state.</div>
     </footer>
   </div>
 </template>

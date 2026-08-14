@@ -231,6 +231,33 @@ describe('article favorites store', () => {
     expect(homeStore.articles[0]?.favoritesCount).toBe(3)
   })
 
+  it('syncs an unfavorite response to the detail and Home stores', async () => {
+    const articleStore = useArticleStore()
+    const homeStore = useHomeStore()
+    const favoritedArticle = {
+      ...demoArticle,
+      favorited: true,
+      favoritesCount: 3,
+    }
+    const unfavoritedArticle = {
+      ...demoArticle,
+      favorited: false,
+      favoritesCount: 2,
+    }
+
+    articleStore.article = favoritedArticle
+    homeStore.articles = [favoritedArticle]
+    globalThis.fetch = (async () =>
+      Response.json({ article: unfavoritedArticle })) as typeof fetch
+
+    await articleStore.removeFavorite('safe-markdown', 'saved-token')
+
+    expect(articleStore.article?.favorited).toBe(false)
+    expect(articleStore.article?.favoritesCount).toBe(2)
+    expect(homeStore.articles[0]?.favorited).toBe(false)
+    expect(homeStore.articles[0]?.favoritesCount).toBe(2)
+  })
+
   it('does not mutate favorite state when the network request fails', async () => {
     const articleStore = useArticleStore()
     const homeStore = useHomeStore()

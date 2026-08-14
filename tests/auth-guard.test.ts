@@ -107,10 +107,12 @@ describe('auth route guard', () => {
   it('redirects an unauthenticated Your Feed visit to login', async () => {
     const router = createGuardedRouter(createPinia())
 
-    await router.push('/?feed=following')
+    await router.push('/?feed=following&page=2')
 
     expect(router.currentRoute.value.name).toBe('login')
-    expect(router.currentRoute.value.query.redirect).toBe('/?feed=following')
+    expect(router.currentRoute.value.query.redirect).toBe(
+      '/?feed=following&page=2',
+    )
   })
 
   it('restores a saved session before entering Your Feed', async () => {
@@ -126,16 +128,18 @@ describe('auth route guard', () => {
       return Response.json({ user: demoUser })
     }) as typeof fetch
 
-    const navigation = router.push('/?feed=following')
+    const navigation = router.push('/?feed=following&page=2')
     await Bun.sleep(1)
 
     expect(requestStarted).toBe(true)
     expect(authStore.status).toBe('loading')
-    expect(router.currentRoute.value.fullPath).not.toBe('/?feed=following')
+    expect(router.currentRoute.value.fullPath).not.toBe(
+      '/?feed=following&page=2',
+    )
 
     await navigation
 
-    expect(router.currentRoute.value.fullPath).toBe('/?feed=following')
+    expect(router.currentRoute.value.fullPath).toBe('/?feed=following&page=2')
     expect(authStore.status).toBe('authenticated')
   })
 })

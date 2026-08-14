@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–12C 已完成；登录用户可以在 Profile 关注或取消关注其他用户，失败时保留原 Profile，下一步进入迭代 12D 个性化 Feed 与跨列表状态复核。
+> 当前状态：迭代 1–12D 已完成；Your Feed、文章收藏跨 Store 同步和 Profile 标签页都能由 URL 恢复，用户关系里程碑完成，下一步进入迭代 13 Settings。
 
 ## 0. 先读这几条约定
 
@@ -1135,10 +1135,17 @@ feat: add profile follow actions
 
 ### 12D：Your Feed 和跨列表状态同步
 
-1. Home 增加 `/articles/feed`；
-2. 未登录访问 `/?feed=following` 跳 `/login`；
-3. 收藏/取消收藏后同步当前文章与 Home 列表；
-4. 验证刷新后 feed/tab 状态可由 URL 恢复。
+1. [x] Home 增加 `/articles/feed`；
+2. [x] 未登录访问 `/?feed=following` 跳 `/login`；
+3. [x] 收藏/取消收藏后同步当前文章与 Home 列表；
+4. [x] 验证刷新后 feed/tab 状态可由 URL 恢复。
+
+本轮复核记录：
+
+- Your Feed 请求和认证守卫已在 8C 落地，本轮不复制第二套实现；
+- 收藏与详情/Home Store 同步已在 10D 落地，本轮补充取消收藏的反向同步回归测试；
+- Router 回归测试明确锁定 `/?feed=following&page=2`，认证恢复后仍保留完整 URL；
+- 浏览器刷新后会继续请求 `/articles/feed?limit=10&offset=10`，Profile Favorites 的路径、tab 和分页 query 也能恢复。
 
 推荐提交：
 
@@ -1189,6 +1196,8 @@ GET /articles/feed
 12B 验收记录（2026-08-14）：`bun run check`、108 个 Bun 测试和 `bun run build` 通过；浏览器验证了 My Articles/Favorited Articles 切换、收藏列表分页、`/profile/:username/favorites?page=2` 刷新恢复、返回作者文章时重置分页和空收藏状态，控制台无错误。
 
 12C 验收记录（2026-08-14）：`bun run check`、111 个 Bun 测试和 `bun run build` 通过；浏览器验证了未登录 Follow 跳转登录并返回、登录后 Follow/Unfollow 的 POST/DELETE 与按钮切换、500 失败时保留原 Profile 并显示错误，正常路径控制台无错误。
+
+12D 验收记录（2026-08-14）：`bun run check`、113 个 Bun 测试和 `bun run build` 通过；浏览器验证了未登录访问 Your Feed 第二页时的登录 redirect、登录和刷新后 `feed=following&page=2` 恢复、收藏/取消收藏双向请求，以及 Favorites 标签页刷新恢复，正常路径控制台无错误。
 
 ### 练习
 
