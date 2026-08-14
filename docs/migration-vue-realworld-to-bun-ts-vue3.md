@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：规划文档；本轮只调整迁移文档，尚未迁移业务代码。
+> 当前状态：迭代 1–7 已完成；已具备登录、注册、会话恢复和受保护路由，下一步进入迭代 8 Global Feed。
 
 ## 0. 先读这几条约定
 
@@ -668,6 +668,8 @@ feat: add login and registration flow
 
 ## 11. 迭代 7：会话恢复和第一个受保护路由
 
+> 完成于 2026-08-14：`/settings`、`/editor` 已受保护，启动时通过 `GET /user` 验证本地 token，并区分 4xx 与临时不可用状态。
+
 ### Why
 
 认证真正有用的地方是“刷新仍能恢复”和“未登录不能访问受保护页面”。先只保护一个页面，理解守卫后再扩展。
@@ -703,14 +705,14 @@ src/stores/auth.ts
 
 ### 测试和验收
 
-- [ ] 未认证访问 `/settings` 跳 `/login`；
-- [ ] 有效 token 刷新后 user 恢复；
-- [ ] `/user` 4xx 清 token；
-- [ ] 5xx/network 保留 token；
-- [ ] 2xx 空 body、畸形 JSON 或缺少合法 `user` 时也保留 token，并进入 `unavailable`；
-- [ ] 守卫不会因初始化竞态错误跳转；
-- [ ] `router` 参数和 meta 有类型；
-- [ ] `bun test`、`type-check`、`build` 通过。
+- [x] 未认证访问 `/settings` 跳 `/login`；
+- [x] 有效 token 刷新后 user 恢复；
+- [x] `/user` 4xx 清 token；
+- [x] 5xx/network 保留 token；
+- [x] 2xx 空 body、畸形 JSON 或缺少合法 `user` 时也保留 token，并进入 `unavailable`；
+- [x] 守卫不会因初始化竞态错误跳转；
+- [x] `router` 参数和 meta 有类型；
+- [x] `bun test`、`type-check`、`build` 通过。
 
 ### 练习
 

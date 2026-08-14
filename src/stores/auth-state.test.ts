@@ -4,6 +4,7 @@ import {
   createAuthenticatedState,
   createAuthStateFromToken,
   createUnauthenticatedState,
+  createUnavailableState,
 } from './auth-state'
 
 const demoUser: User = {
@@ -26,7 +27,7 @@ describe('auth state transitions', () => {
 
   it('restores a local token without inventing a user', () => {
     expect(createAuthStateFromToken('saved-token')).toEqual({
-      status: 'authenticated',
+      status: 'loading',
       token: 'saved-token',
       user: null,
       errors: {},
@@ -39,11 +40,21 @@ describe('auth state transitions', () => {
     const userSnapshot = structuredClone(demoUser)
 
     const authenticated = createAuthenticatedState(initial, demoUser)
+    const authenticatedSnapshot = structuredClone(authenticated)
+    const unavailable = createUnavailableState(authenticated)
     const loggedOut = createUnauthenticatedState(authenticated)
 
     expect(initial).toEqual(initialSnapshot)
     expect(demoUser).toEqual(userSnapshot)
+    expect(authenticated).toEqual(authenticatedSnapshot)
     expect(authenticated).not.toBe(initial)
+    expect(unavailable).not.toBe(authenticated)
+    expect(unavailable).toEqual({
+      status: 'unavailable',
+      token: demoUser.token,
+      user: null,
+      errors: {},
+    })
     expect(loggedOut).not.toBe(authenticated)
     expect(loggedOut).toEqual({
       status: 'unauthenticated',

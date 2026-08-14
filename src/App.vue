@@ -4,7 +4,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
-const { currentUser, isAuthenticated } = storeToRefs(authStore)
+const { currentUser, status } = storeToRefs(authStore)
 
 function logout(): void {
   authStore.logout()
@@ -22,7 +22,13 @@ function logout(): void {
         <nav class="nav-links" aria-label="主导航">
           <RouterLink class="nav-link" :to="{ name: 'home' }">Home</RouterLink>
 
-          <template v-if="isAuthenticated">
+          <template v-if="status === 'authenticated'">
+            <RouterLink class="nav-link" :to="{ name: 'article-edit' }">
+              New Article
+            </RouterLink>
+            <RouterLink class="nav-link" :to="{ name: 'settings' }">
+              Settings
+            </RouterLink>
             <RouterLink
               class="nav-link"
               :to="{
@@ -37,7 +43,14 @@ function logout(): void {
             </button>
           </template>
 
-          <template v-else>
+          <template v-else-if="status === 'unavailable'">
+            <span class="nav-link">Session unavailable</span>
+            <button class="nav-link nav-button" type="button" @click="logout">
+              Log out
+            </button>
+          </template>
+
+          <template v-else-if="status === 'unauthenticated'">
             <RouterLink class="nav-link" :to="{ name: 'login' }"
               >Sign in</RouterLink
             >
@@ -53,7 +66,7 @@ function logout(): void {
 
     <footer class="site-footer">
       <div class="container">
-        Iteration 6 · Real Login and Register API slice.
+        Iteration 7 · Session restore and protected routes.
       </div>
     </footer>
   </div>

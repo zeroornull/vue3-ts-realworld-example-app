@@ -1,6 +1,7 @@
 import type { ApiErrors, User } from '../types/realworld'
 
-export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+export type AuthStatus =
+  'loading' | 'authenticated' | 'unauthenticated' | 'unavailable'
 
 export type AuthState = {
   status: AuthStatus
@@ -29,8 +30,17 @@ export function createAuthStateFromToken(token: string | null): AuthState {
   }
 
   return {
-    status: 'authenticated',
+    status: 'loading',
     token,
+    user: null,
+    errors: {},
+  }
+}
+
+export function createUnavailableState(state: AuthState): AuthState {
+  return {
+    ...state,
+    status: 'unavailable',
     user: null,
     errors: {},
   }

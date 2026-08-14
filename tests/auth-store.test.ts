@@ -50,10 +50,119 @@ describe('auth store', () => {
 
     authStore.hydrateFromStorage(storage)
 
-    expect(authStore.status).toBe('authenticated')
+    expect(authStore.status).toBe('loading')
     expect(authStore.token).toBe('saved-token')
     expect(authStore.user).toBeNull()
-    expect(authStore.isAuthenticated).toBe(true)
+    expect(authStore.isAuthenticated).toBe(false)
+  })
+
+  it('restores a valid saved session from GET /user', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage('saved-token')
+
+    globalThis.fetch = (async () =>
+      Response.json({ user: demoUser })) as typeof fetch
+
+    authStore.hydrateFromStorage(storage)
+    await authStore.restoreSession(storage)
+
+    expect(authStore.status).toBe('authenticated')
+    expect(authStore.currentUser).toEqual(demoUser)
+    expect(values.get(JWT_TOKEN_KEY)).toBe(demoUser.token)
+  })
+
+  it('clears a rejected token after a 4xx response', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage('expired-token')
+
+    globalThis.fetch = (async () =>
+      Response.json(
+        { errors: { token: ['is invalid'] } },
+        { status: 401 },
+      )) as typeof fetch
+
+    authStore.hydrateFromStorage(storage)
+    await expect(authStore.restoreSession(storage)).resolves.toBeUndefined()
+
+    expect(authStore.status).toBe('unauthenticated')
+    expect(authStore.token).toBeNull()
+    expect(authStore.user).toBeNull()
+    expect(values.has(JWT_TOKEN_KEY)).toBe(false)
+  })
+
+  it('keeps the token unavailable after a 5xx response', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage('saved-token')
+
+    globalThis.fetch = (async () =>
+      Response.json(
+        { error: 'temporary outage' },
+        { status: 503 },
+      )) as typeof fetch
+
+    authStore.hydrateFromStorage(storage)
+    await authStore.restoreSession(storage)
+
+    expect(authStore.status).toBe('unavailable')
+    expect(authStore.token).toBe('saved-token')
+    expect(values.get(JWT_TOKEN_KEY)).toBe('saved-token')
+  })
+
+  it('keeps the token unavailable after a network failure', async () => {
+    const authStore = useAuthStore()
+    const { storage, values } = createMemoryStorage('saved-token')
+
+    globalThis.fetch = (async () => {
+      throw new TypeError('network unavailable')
+    }) as typeof fetch
+
+    authStore.hydrateFromStorage(storage)
+    await expect(authStore.restoreSession(storage)).resolves.toBeUndefined()
+
+    expect(authStore.status).toBe('unavailable')
+    expect(authStore.token).toBe('saved-token')
+    expect(values.get(JWT_TOKEN_KEY)).toBe('saved-token')
+  })
+
+  it('keeps the token when a 2xx response has no body or malformed JSON', async () => {
+    for (const response of [
+      new Response(null, { status: 200 }),
+      new Response('{', { status: 200 }),
+    ]) {
+      setActivePinia(createPinia())
+      const authStore = useAuthStore()
+      const { storage, values } = createMemoryStorage('saved-token')
+
+      globalThis.fetch = (async () => response) as typeof fetch
+
+      authStore.hydrateFromStorage(storage)
+      await authStore.restoreSession(storage)
+
+      expect(authStore.status).toBe('unavailable')
+      expect(authStore.token).toBe('saved-token')
+      expect(values.get(JWT_TOKEN_KEY)).toBe('saved-token')
+    }
+  })
+
+  it('keeps the token when a 2xx response has a missing or invalid user', async () => {
+    for (const body of [
+      { message: 'missing user' },
+      { user: { ...demoUser, image: false } },
+    ]) {
+      setActivePinia(createPinia())
+      const authStore = useAuthStore()
+      const { storage, values } = createMemoryStorage('saved-token')
+
+      globalThis.fetch = (async () => Response.json(body)) as typeof fetch
+
+      authStore.hydrateFromStorage(storage)
+      await authStore.restoreSession(storage)
+
+      expect(authStore.status).toBe('unavailable')
+      expect(authStore.token).toBe('saved-token')
+      expect(authStore.user).toBeNull()
+      expect(values.get(JWT_TOKEN_KEY)).toBe('saved-token')
+    }
   })
 
   it('sets a local session and clears token and user on logout', () => {

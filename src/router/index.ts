@@ -23,6 +23,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('../views/Register.vue'),
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../views/Settings.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/editor',
+    name: 'article-edit',
+    component: () => import('../views/ArticleEdit.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/article/:slug',
     name: 'article',
     component: () => import('../views/Article.vue'),

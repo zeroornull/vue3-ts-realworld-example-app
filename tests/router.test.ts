@@ -27,4 +27,9 @@ describe('router skeleton', () => {
       name: 'not-found',
     })
   })
+
+  it('marks settings and editor as protected routes', () => {
+    expect(router.resolve('/settings').meta.requiresAuth).toBe(true)
+    expect(router.resolve('/editor').meta.requiresAuth).toBe(true)
+  })
 })
