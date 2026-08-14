@@ -140,7 +140,11 @@ function logout(): void {
 
       <hr />
 
-      <button class="logout-button" type="button" @click="logout">
+      <button
+        class="logout-button btn btn-outline-danger"
+        type="button"
+        @click="logout"
+      >
         Or click here to logout.
       </button>
     </section>

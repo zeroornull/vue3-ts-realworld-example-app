@@ -26,7 +26,20 @@ function formatDate(value: string): string {
 
 <template>
   <div class="article-meta">
-    <div class="author-details">
+    <RouterLink
+      class="avatar-link"
+      :to="{
+        name: 'profile',
+        params: { username: article.author.username },
+      }"
+    >
+      <img
+        :src="article.author.image || '/default-avatar.svg'"
+        :alt="`${article.author.username} avatar`"
+      />
+    </RouterLink>
+
+    <div class="author-details info">
       <RouterLink
         class="author"
         :to="{
@@ -36,7 +49,7 @@ function formatDate(value: string): string {
       >
         {{ article.author.username }}
       </RouterLink>
-      <time class="article-date" :datetime="article.createdAt">
+      <time class="article-date date" :datetime="article.createdAt">
         {{ formatDate(article.createdAt) }}
       </time>
     </div>
@@ -62,7 +75,12 @@ function formatDate(value: string): string {
 
 .author-details {
   display: grid;
+  flex: 1;
   gap: 0.15rem;
+}
+
+.avatar-link {
+  flex: 0 0 auto;
 }
 
 .author {

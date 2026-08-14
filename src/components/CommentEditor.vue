@@ -20,7 +20,9 @@ const isSubmitting = ref(false)
 const canSubmit = computed(
   () => Boolean(body.value.trim()) && !isSubmitting.value,
 )
-const userImage = computed(() => currentUser.value?.image || '/favicon.svg')
+const userImage = computed(
+  () => currentUser.value?.image || '/default-avatar.svg',
+)
 
 async function submitComment(): Promise<void> {
   if (isSubmitting.value) {

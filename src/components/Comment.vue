@@ -23,7 +23,9 @@ const isDeleting = ref(false)
 const isCurrentUser = computed(
   () => currentUser.value?.username === props.comment.author.username,
 )
-const authorImage = computed(() => props.comment.author.image || '/favicon.svg')
+const authorImage = computed(
+  () => props.comment.author.image || '/default-avatar.svg',
+)
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
@@ -84,6 +86,7 @@ async function deleteComment(): Promise<void> {
           :aria-label="`Delete comment ${comment.id}`"
           @click="deleteComment"
         >
+          <i class="ion-trash-a" aria-hidden="true"></i>
           {{ isDeleting ? 'Deleting...' : 'Delete' }}
         </button>
       </span>

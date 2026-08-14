@@ -2,3 +2,6 @@
 # Keep dependencies installed for development and build scripts.
 [install]
 linker = "isolated"
+
+[test]
+pathIgnorePatterns = ["realworld/**"]

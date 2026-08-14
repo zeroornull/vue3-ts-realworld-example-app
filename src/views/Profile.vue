@@ -153,7 +153,7 @@ watch(
       <header class="user-info">
         <div class="container user-info-content">
           <img
-            class="user-img user-pic"
+            class="user-img"
             :src="avatarUrl"
             :alt="`${profile.username}'s avatar`"
             @error="showDefaultAvatar"

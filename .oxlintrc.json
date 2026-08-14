@@ -1,7 +1,12 @@
 {
   "$schema": "https://oxc.rs/schema/oxlint.json",
   "plugins": ["eslint", "typescript", "vue"],
-  "ignorePatterns": ["dist/**", "node_modules/**", "playground/**"],
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "playground/**",
+    "realworld/**"
+  ],
   "rules": {
     "unicorn/no-empty-file": "off"
   }

@@ -96,7 +96,7 @@ async function deleteCurrentArticle(): Promise<void> {
   <div class="article-actions">
     <div v-if="isAuthor" class="action-buttons">
       <RouterLink
-        class="article-button edit-button"
+        class="article-button edit-button btn btn-outline-secondary"
         :to="{
           name: 'article-edit',
           params: { slug: article.slug },
@@ -106,7 +106,7 @@ async function deleteCurrentArticle(): Promise<void> {
       </RouterLink>
       <button
         type="button"
-        class="article-button delete-button"
+        class="article-button delete-button btn btn-outline-danger"
         :disabled="isSubmitting"
         @click="deleteCurrentArticle"
       >
@@ -117,8 +117,8 @@ async function deleteCurrentArticle(): Promise<void> {
     <button
       v-else
       type="button"
-      class="article-button favorite-button"
-      :class="{ active: article.favorited }"
+      class="article-button favorite-button btn"
+      :class="article.favorited ? 'active btn-primary' : 'btn-outline-primary'"
       :disabled="isSubmitting"
       :aria-pressed="article.favorited"
       @click="toggleFavorite"

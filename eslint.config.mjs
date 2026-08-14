@@ -32,7 +32,12 @@ export default await withVueTs(
     },
   },
   {
-    ignores: ['playground/**', '.codebase-memory/**', '.omx/**'],
+    ignores: [
+      'playground/**',
+      'realworld/**',
+      '.codebase-memory/**',
+      '.omx/**',
+    ],
   },
   ...pluginOxlint.configs['flat/recommended'],
   eslintConfigPrettier,

@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–13 已完成；Settings 支持用户资料更新、可选密码、错误展示和退出登录，认证闭环完成，下一步进入迭代 14 主题、静态资源与 DOM 契约。
+> 当前状态：迭代 1–14 已完成；下一步进入迭代 15 Playwright。
 
 ## 0. 先读这几条约定
 
@@ -1329,13 +1329,24 @@ src/assets/vue.svg
 
 ### 验收
 
-- [ ] `git submodule status` 显示上述固定 commit；
-- [ ] `default-avatar.svg`、favicon、manifest 可从 preview 加载；
-- [ ] null/空头像使用默认头像；
-- [ ] `.navbar`、`.nav-link`、`.banner`、`.container`、`.feed-toggle`、`.article-preview`、`.article-meta`、`.article-content`、`.article-page`、`.sidebar`、`.tag-list`、`.card`、`.comment-form`、`.profile-page`、`.pagination`、`.error-messages` 存在；
-- [ ] 表单 `name` 和 placeholder 与 `SELECTORS.md` 一致；
-- [ ] 关键文案包括 `Home`、`Global Feed`、`Your Feed`、`Sign in`、`Sign up`、`Publish Article`、`Update Settings`、`Post Comment`、`Favorite/Unfavorite`、`Follow/Unfollow`；
-- [ ] 深层链接在 preview/部署服务器有 history fallback。
+- [x] `git submodule status` 显示上述固定 commit；
+- [x] `default-avatar.svg`、favicon、manifest 可从 preview 加载；
+- [x] null/空头像使用默认头像；
+- [x] `.navbar`、`.nav-link`、`.banner`、`.container`、`.feed-toggle`、`.article-preview`、`.article-meta`、`.article-content`、`.article-page`、`.sidebar`、`.tag-list`、`.card`、`.comment-form`、`.profile-page`、`.pagination`、`.error-messages` 存在；
+- [x] 表单 `name` 和 placeholder 与 `SELECTORS.md` 一致；
+- [x] 关键文案包括 `Home`、`Global Feed`、`Your Feed`、`Sign in`、`Sign up`、`Publish Article`、`Update Settings`、`Post Comment`、`Favorite/Unfavorite`、`Follow/Unfollow`；
+- [x] 深层链接在 preview/部署服务器有 history fallback。
+
+本轮实现记录：
+
+- 新增 `realworld` submodule，并固定到 `dd53ae6ef11e492a74feabc8043133e9f5283967`；
+- 从参考仓库复制 `default-avatar.svg`、`favicon.ico`、`manifest.json` 和 `robots.txt`，`index.html` 改用 Conduit 标题、favicon 和 manifest；
+- `src/main.ts` 先加载 `realworld/assets/theme/styles.css`，再加载现有 `style.scss` 作为项目覆盖层，没有在同一轮重写全部页面样式；
+- 对齐文章、评论、Profile 和导航头像 fallback，以及 tag、favorite、logout、comment delete 的 RealWorld selector class；
+- 新增 `tests/realworld-contract.test.ts`，用 6 个契约测试覆盖静态资源、主题加载顺序、DOM class、表单属性、可见文案和默认头像；
+- Bun 测试配置排除 submodule 自带的 Playwright 文件，避免 `bun test` 把上游 E2E 当成本项目单元测试执行。
+
+验收记录（2026-08-14）：`bun run check`、123 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 验证了首页、文章详情、Profile、默认头像、主题与关键 selector，390px 宽度无横向溢出且控制台无错误；preview 下首页、文章深层链接和 4 个静态资源均返回 200。
 
 ### 推荐提交
 

@@ -38,6 +38,11 @@ function logout(): void {
                 params: { username: currentUser?.username ?? 'local-user' },
               }"
             >
+              <img
+                class="user-pic"
+                :src="currentUser?.image || '/default-avatar.svg'"
+                :alt="`${currentUser?.username ?? 'Current user'} avatar`"
+              />
               {{ currentUser?.username ?? 'Local session' }}
             </RouterLink>
             <button class="nav-link nav-button" type="button" @click="logout">
@@ -67,7 +72,9 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 13 · Settings and logout flow.</div>
+      <div class="container">
+        Iteration 14 · RealWorld theme and DOM contract.
+      </div>
     </footer>
   </div>
 </template>

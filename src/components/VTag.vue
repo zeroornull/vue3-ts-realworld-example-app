@@ -15,12 +15,12 @@ withDefaults(
 <template>
   <RouterLink
     v-if="linked"
-    class="tag-pill"
+    class="tag-default tag-pill"
     :to="{ name: 'tag', params: { tag: name } }"
   >
     {{ name }}
   </RouterLink>
-  <span v-else class="tag-pill">{{ name }}</span>
+  <span v-else class="tag-default tag-pill">{{ name }}</span>
 </template>
 
 <style scoped>
