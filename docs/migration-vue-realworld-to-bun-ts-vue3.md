@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15T 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、Follow 错误恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15U。
+> 当前状态：迭代 1–14、15A–15U 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、Follow 错误和畸形响应恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15V。
 
 ## 0. 先读这几条约定
 
@@ -1676,7 +1676,16 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15T 验收记录（2026-08-15）：Profile/Settings 套件新增 1 个测试，完整 Playwright 累计 43 个；Follow 503 → 重试成功的请求次数、按钮状态、`aria-pressed`、active class、错误提示和可重试状态均通过验证。
 
-下一轮 15U：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
+15U 实现记录：
+
+- 在 `tests/e2e/profile-settings.spec.ts` 增加 Follow 畸形 2xx 响应恢复测试，继续使用本地 route mock，不连接公共 API；
+- 第一次 Follow 请求返回 username 不匹配的 Profile 时，按钮保持未关注、非 active，显示 `The profile service returned an invalid follow response.` 且恢复可点击；
+- 第二次点击返回合法 Profile 后，按钮切换为 `Unfollow alice`，`aria-pressed`、active class 和错误提示同步更新；
+- 该测试锁定 `UnexpectedResponseError` 在 Follow 写入边界上的处理，避免把错误用户数据写入当前 Profile。
+
+15U 验收记录（2026-08-15）：Profile/Settings 套件新增 1 个测试，完整 Playwright 累计 44 个；Follow 畸形 2xx → 重试成功的请求次数、原状态保留、错误提示、可重试状态和成功后的按钮状态均通过验证。
+
+下一轮 15V：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
 
 ### 推荐提交
 

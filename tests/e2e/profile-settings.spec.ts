@@ -204,6 +204,68 @@ test('recovers from a follow error and retries successfully', async ({
   expect(followAttempts).toBe(2)
 })
 
+test('recovers from a malformed follow response and retries successfully', async ({
+  page,
+}) => {
+  let followAttempts = 0
+
+  await mockSession(page)
+  await page.route(/\/api\/profiles\/alice$/, async (route) => {
+    await route.fulfill({ json: { profile: aliceProfile } })
+  })
+  await page.route(/\/api\/articles\?.*$/, async (route) => {
+    await route.fulfill({ json: { articles: [], articlesCount: 0 } })
+  })
+  await page.route(/\/api\/profiles\/alice\/follow$/, async (route) => {
+    followAttempts += 1
+
+    if (followAttempts === 1) {
+      await route.fulfill({
+        json: {
+          profile: {
+            ...aliceProfile,
+            username: 'unexpected-user',
+            following: true,
+          },
+        },
+      })
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        profile: {
+          ...aliceProfile,
+          following: true,
+        },
+      },
+    })
+  })
+
+  await page.goto('/profile/alice')
+
+  const followButton = page.getByRole('button', { name: 'Follow alice' })
+  await expect(followButton).toBeVisible()
+  await followButton.click()
+
+  await expect(followButton).toBeVisible()
+  await expect(followButton).toBeEnabled()
+  await expect(followButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(followButton).not.toHaveClass(/active/)
+  await expect(page.locator('.follow-error')).toHaveText(
+    'The profile service returned an invalid follow response.',
+  )
+
+  await followButton.click()
+
+  const unfollowButton = page.getByRole('button', { name: 'Unfollow alice' })
+  await expect(unfollowButton).toBeVisible()
+  await expect(unfollowButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(unfollowButton).toHaveClass(/active/)
+  await expect(page.locator('.follow-error')).toHaveCount(0)
+  expect(followAttempts).toBe(2)
+})
+
 test('updates settings, rotates the token, and logs out', async ({ page }) => {
   const updatedUser = {
     ...reader,

@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15T · Follow error recovery.</div>
+      <div class="container">Iteration 15U · Follow response recovery.</div>
     </footer>
   </div>
 </template>
