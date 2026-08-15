@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15S 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15T。
+> 当前状态：迭代 1–14、15A–15T 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、Follow 错误恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15U。
 
 ## 0. 先读这几条约定
 
@@ -1667,7 +1667,16 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15S 验收记录（2026-08-15）：文章交互套件新增 1 个测试，完整 Playwright 累计 42 个；收藏 503 → 重试成功的请求次数、按钮状态、错误提示和双位置同步均通过验证。
 
-下一轮 15T：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
+15T 实现记录：
+
+- 在 `tests/e2e/profile-settings.spec.ts` 增加 Follow 失败恢复测试，继续使用本地 route mock，不连接公共 API；
+- 第一次 `POST /api/profiles/alice/follow` 返回 503 时，按钮保持 `Follow alice`、`aria-pressed="false"` 和非 active 状态，错误提示显示且按钮恢复可点击；
+- 第二次点击返回成功 Profile，按钮切换为 `Unfollow alice`，`aria-pressed="true"` 与 active 状态同步，错误提示清除；
+- 该测试锁定 Profile store 的 follow 状态回滚、错误归一化和重试成功路径。
+
+15T 验收记录（2026-08-15）：Profile/Settings 套件新增 1 个测试，完整 Playwright 累计 43 个；Follow 503 → 重试成功的请求次数、按钮状态、`aria-pressed`、active class、错误提示和可重试状态均通过验证。
+
+下一轮 15U：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
 
 ### 推荐提交
 

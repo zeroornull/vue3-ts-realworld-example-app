@@ -145,6 +145,65 @@ test('follows and unfollows another user with the saved session', async ({
   expect(authorizations).toEqual([`Token ${token}`, `Token ${token}`])
 })
 
+test('recovers from a follow error and retries successfully', async ({
+  page,
+}) => {
+  let followAttempts = 0
+
+  await mockSession(page)
+  await page.route(/\/api\/profiles\/alice$/, async (route) => {
+    await route.fulfill({ json: { profile: aliceProfile } })
+  })
+  await page.route(/\/api\/articles\?.*$/, async (route) => {
+    await route.fulfill({ json: { articles: [], articlesCount: 0 } })
+  })
+  await page.route(/\/api\/profiles\/alice\/follow$/, async (route) => {
+    followAttempts += 1
+
+    if (followAttempts === 1) {
+      await route.fulfill({
+        status: 503,
+        json: { errors: { profile: ['temporarily unavailable'] } },
+      })
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        profile: {
+          ...aliceProfile,
+          following: true,
+        },
+      },
+    })
+  })
+
+  await page.goto('/profile/alice')
+
+  const followButton = page.getByRole('button', { name: 'Follow alice' })
+  await expect(followButton).toBeVisible()
+  await expect(followButton).toHaveAttribute('aria-pressed', 'false')
+
+  await followButton.click()
+
+  await expect(followButton).toBeVisible()
+  await expect(followButton).toBeEnabled()
+  await expect(followButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(followButton).not.toHaveClass(/active/)
+  await expect(page.locator('.follow-error')).toHaveText(
+    'Unable to update the follow status (HTTP 503).',
+  )
+
+  await followButton.click()
+
+  const unfollowButton = page.getByRole('button', { name: 'Unfollow alice' })
+  await expect(unfollowButton).toBeVisible()
+  await expect(unfollowButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(unfollowButton).toHaveClass(/active/)
+  await expect(page.locator('.follow-error')).toHaveCount(0)
+  expect(followAttempts).toBe(2)
+})
+
 test('updates settings, rotates the token, and logs out', async ({ page }) => {
   const updatedUser = {
     ...reader,
