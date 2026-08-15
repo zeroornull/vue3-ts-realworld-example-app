@@ -123,3 +123,30 @@ test('initializes Settings null image and bio fields as empty strings', async ({
   await expect(page.locator('input[name="image"]')).toHaveValue('')
   await expect(page.locator('textarea[name="bio"]')).toHaveValue('')
 })
+
+test('falls back to the default avatar when a profile image request fails', async ({
+  page,
+}) => {
+  const brokenAvatar = 'https://cdn.example.test/broken-avatar.png'
+  const profile = {
+    ...alice,
+    image: brokenAvatar,
+  }
+
+  await page.route(/\/api\/profiles\/alice$/, async (route) => {
+    await route.fulfill({ json: { profile } })
+  })
+  await page.route(/\/api\/articles\?.*$/, async (route) => {
+    await route.fulfill({ json: { articles: [], articlesCount: 0 } })
+  })
+  await page.route(brokenAvatar, async (route) => {
+    await route.abort('failed')
+  })
+
+  await page.goto('/profile/alice')
+
+  await expect(page.locator('.user-img')).toHaveAttribute(
+    'src',
+    /default-avatar\.svg$/,
+  )
+})

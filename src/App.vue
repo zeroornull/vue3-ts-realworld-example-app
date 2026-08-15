@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15P · Feed and Markdown security.</div>
+      <div class="container">Iteration 15Q · Avatar fallback.</div>
     </footer>
   </div>
 </template>
