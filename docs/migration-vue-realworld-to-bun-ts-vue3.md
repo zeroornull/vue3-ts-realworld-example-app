@@ -1707,6 +1707,7 @@ bun run test:e2e:official:security:preflight -- --health-check
 - `.github/workflows/deploy-pages.yml`：推送 `master` 或手动触发时执行部署；
 - checkout 时使用 `submodules: recursive`，确保 `realworld/` 主题依赖存在；
 - 使用 Bun `1.3.14`，先运行 `bun run check && bun test`，再运行 `bun run build`；
+- `@types/node` 作为直接开发依赖声明，满足 `tsconfig.node.json` 的 `types: ["node"]`，避免 CI 的隔离安装漏掉传递依赖；
 - 构建时自动把 `GITHUB_REPOSITORY` 的仓库名转换为 Vite base，例如 `/vue3-ts-realworld-example-app/`；
 - 使用 `actions/upload-pages-artifact@v4` 和 `actions/deploy-pages@v4` 发布 `dist/`；
 - `public/404.html` 和 `index.html` 配合处理 GitHub Pages 的 SPA 深层路由刷新，保留 `createWebHistory` 的正常 URL；
