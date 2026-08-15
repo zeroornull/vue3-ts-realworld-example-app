@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15V 已完成；本地功能迁移、调试契约、普通 Playwright 套件和本地 security 套件已完成，官方 security 执行已增加环境门禁与只读 preflight。官方 RealWorld E2E 主体仍未运行，因为当前没有可丢弃的专用 API；禁止把公共 API 当作写入测试环境。
+> 当前状态：迭代 1–14、15A–15V、16 已完成；本地功能迁移、调试契约、普通 Playwright 套件、本地 security 套件和 GitHub Pages 发布配置已完成，官方 security 执行已增加环境门禁与只读 preflight。官方 RealWorld E2E 主体仍未运行，因为当前没有可丢弃的专用 API；禁止把公共 API 当作写入测试环境。
 
 ## 0. 先读这几条约定
 
@@ -1698,6 +1698,38 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15V 验收记录（2026-08-15）：`bun test` 133 个通过；`bun run check`、`bun run build`、`bun run test:e2e`（45 个）和 `bun run test:e2e:security`（4 个）通过；官方 `test:e2e:official:list` 仍可发现 139 个测试，官方主体和 16 个 security 测试未运行，原因是没有专用可丢弃 API；工作区无未提交修改。
 
+## 16. GitHub Pages 发布
+
+当前仓库是 Vite 构建的纯前端项目，可以使用 GitHub Pages 托管 `dist/`。页面本身是静态文件，认证、文章、评论等数据请求仍然发送到 `VITE_API_URL` 指定的 RealWorld API。
+
+### 已加入的发布配置
+
+- `.github/workflows/deploy-pages.yml`：推送 `master` 或手动触发时执行部署；
+- checkout 时使用 `submodules: recursive`，确保 `realworld/` 主题依赖存在；
+- 使用 Bun `1.3.14`，先运行 `bun run check && bun test`，再运行 `bun run build`；
+- 构建时自动把 `GITHUB_REPOSITORY` 的仓库名转换为 Vite base，例如 `/vue3-ts-realworld-example-app/`；
+- 使用 `actions/upload-pages-artifact@v4` 和 `actions/deploy-pages@v4` 发布 `dist/`；
+- `public/404.html` 和 `index.html` 配合处理 GitHub Pages 的 SPA 深层路由刷新，保留 `createWebHistory` 的正常 URL；
+- `tests/github-pages-contract.test.ts` 锁定 workflow、submodule、base path 和 fallback 契约。
+
+### 第一次开启 Pages
+
+1. 打开仓库的 **Settings → Pages**；
+2. 在 **Build and deployment → Source** 中选择 **GitHub Actions**；
+3. 推送包含 `.github/workflows/deploy-pages.yml` 的 `master`；
+4. 等待 `Deploy to GitHub Pages` workflow 成功；
+5. 访问：`https://zeroornull.github.io/vue3-ts-realworld-example-app/`。
+
+### 发布前检查
+
+- 如果仓库改名，需要同步检查 `public/404.html` 的 `repositorySegments` 和 Pages URL；
+- `VITE_BASE_PATH` 只影响构建路径，不是 API 地址；
+- `VITE_API_URL` 会被打包到浏览器，不能放入任何私密凭据；
+- GitHub Pages 不提供后端，公共 API 的 CORS、稳定性和写入策略仍需单独负责；
+- 没有专用 API 时，不运行官方会创建用户、文章或评论的 E2E。
+
+16 验收记录（2026-08-15）：`VITE_BASE_PATH=/vue3-ts-realworld-example-app/ bun run build` 成功，构建产物中的 JS/CSS/favicon/manifest 路径均带项目 base；`bun test` 135 个通过，`bun run check` 通过；Pages workflow 契约测试通过。GitHub Actions 的真实远程部署需推送后由仓库 Pages 设置触发，当前未对外部仓库设置执行写操作。
+
 ### 推荐提交
 
 至少拆成：
@@ -1887,6 +1919,7 @@ test: add RealWorld end to end coverage
 test: add security regression coverage
 test: expose the browser debug contract
 chore: remove unused starter files
+chore: add GitHub Pages deployment
 docs: update incremental migration guide
 ```
 

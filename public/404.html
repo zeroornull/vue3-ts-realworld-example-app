@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Conduit</title>
+    <script>
+      ;(function redirectGitHubPagesRoute(location) {
+        const repositorySegments = 1
+        const path = location.pathname
+          .split('/')
+          .slice(1 + repositorySegments)
+          .join('/')
+        const repositoryPath = location.pathname
+          .split('/')
+          .slice(0, 1 + repositorySegments)
+          .join('/')
+
+        const query = location.search
+          ? `&${location.search.slice(1).replace(/&/g, '~and~')}`
+          : ''
+
+        location.replace(
+          `${location.protocol}//${location.host}${repositoryPath}/?/${path.replace(
+            /&/g,
+            '~and~',
+          )}${query}${location.hash}`,
+        )
+      })(window.location)
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to Conduit…</p>
+  </body>
+</html>

@@ -7,6 +7,25 @@
     <meta name="theme-color" content="#5cb85c" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Conduit</title>
+    <script>
+      ;(function restoreGitHubPagesRoute(location) {
+        if (location.search[1] !== '/') {
+          return
+        }
+
+        const route = location.search
+          .slice(1)
+          .split('&')
+          .map((part) => part.replace(/~and~/g, '&'))
+          .join('?')
+
+        window.history.replaceState(
+          null,
+          '',
+          `${location.pathname.slice(0, -1)}${route}${location.hash}`,
+        )
+      })(window.location)
+    </script>
   </head>
   <body>
     <div id="app"></div>

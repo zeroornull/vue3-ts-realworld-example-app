@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15V · Local migration complete.</div>
+      <div class="container">Iteration 16 · GitHub Pages ready.</div>
     </footer>
   </div>
 </template>
