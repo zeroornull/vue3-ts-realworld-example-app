@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15L 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，官方 security 执行已增加环境门禁，下一步进入迭代 15M。
+> 当前状态：迭代 1–14、15A–15M 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15N。
 
 ## 0. 先读这几条约定
 
@@ -1591,11 +1591,31 @@ bunx playwright test --config playwright.official.config.ts --grep @security
 
 15L 验收记录（2026-08-15）：`bun test` 128 个通过；官方 discovery 仍为 139 个测试/12 个 spec，其中 `@security` 为 16 个测试；使用公共 API 运行命令被 `[official-security-gate] refusing to run mutating security tests against api.realworld.show.` 拒绝，未创建用户、文章或其他远程数据。`bun run check`、`bun run build` 和 `git diff --check` 通过。
 
-下一轮 15M：专用 API 环境下的官方 security dry run。
+15M 实现记录：
 
-- 先验证专用 API 的注册、文章创建、用户更新和数据清理闭环；
-- 仅在清理脚本和权限边界可重复验证后，运行官方 16 个 security 测试；
-- 如果没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
+- 新增 `scripts/official-security-preflight.ts`，把“配置是否具备执行条件”和“真正运行官方测试”分开；
+- 新增 `test:e2e:official:security:preflight`，默认只读检查 `API_BASE`、`API_MODE=true`、mutation/cleanup 确认和公共 API 拒绝规则，不发送网络请求；
+- 只有显式追加 `--health-check` 才会对专用 API 的 `/tags` 发起一次只读 `GET`，不会注册用户、创建文章或更新数据；
+- 新增 5 个 Bun 单测，锁定缺失 `API_BASE`、公共 API、`API_MODE=false`、合法专用 API、默认不发请求和可选只读 health check；
+- 页脚迭代标识更新为 `15M · Official security preflight`，便于在浏览器中确认当前切片。
+
+使用方式：
+
+```bash
+# 没有专用 API 时也可以安全执行，会输出 blocker 并返回非零退出码
+bun run test:e2e:official:security:preflight
+
+# 有专用、可丢弃的 API 时，先做只读健康检查（仍不会写数据）
+API_BASE=https://<dedicated-disposable-api>/api \\
+API_MODE=true \\
+OFFICIAL_E2E_ALLOW_MUTATIONS=true \\
+OFFICIAL_E2E_CLEANUP_CONFIRMED=true \\
+bun run test:e2e:official:security:preflight -- --health-check
+```
+
+15M 验收记录（2026-08-15）：`bun test` 133 个通过；preflight 单测确认缺少环境变量时不会调用 `fetch`，合法专用 API 默认也不会发请求，`--health-check` 仅使用 `GET /tags`；当前环境未提供专用 API，因此没有执行官方 16 个 security 主体，也没有连接或写入公共 API。`bun run check`、`bun run build` 和 `git diff --check` 继续作为本轮完成门槛。
+
+下一轮 15N：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
 
 ### 推荐提交
 

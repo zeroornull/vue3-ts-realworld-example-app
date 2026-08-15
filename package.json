@@ -11,6 +11,7 @@
     "test": "bun test",
     "test:e2e": "bunx playwright test",
     "test:e2e:official:list": "bunx playwright test --config playwright.official.config.ts --list",
+    "test:e2e:official:security:preflight": "bun run --bun scripts/official-security-preflight.ts",
     "format": "bun run --bun prettier . --write",
     "format:check": "bun run --bun prettier . --check",
     "lint": "bun run --bun oxlint . && bun run --bun eslint .",
