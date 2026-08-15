@@ -230,3 +230,55 @@ test('favorites and unfavorites an article with the RealWorld button states', as
   expect(methods).toEqual(['POST', 'DELETE'])
   expect(authorizations).toEqual([`Token ${token}`, `Token ${token}`])
 })
+
+test('keeps favorite state unchanged and recovers after a favorite API error', async ({
+  page,
+}) => {
+  let favoriteRequests = 0
+
+  await mockSession(page)
+  await mockArticleRead(page, [])
+  await page.route(
+    new RegExp(`/api/articles/${slug}/favorite$`),
+    async (route) => {
+      favoriteRequests += 1
+
+      if (favoriteRequests === 1) {
+        await route.fulfill({
+          status: 503,
+          json: { errors: { favorite: ['temporarily unavailable'] } },
+        })
+        return
+      }
+
+      await route.fulfill({
+        json: {
+          article: {
+            ...article,
+            favorited: true,
+            favoritesCount: 1,
+          },
+        },
+      })
+    },
+  )
+
+  await page.goto(`/article/${slug}`)
+  const favoriteButtons = page.getByRole('button', { name: /^Favorite/ })
+  await favoriteButtons.first().click()
+
+  await expect(
+    page.locator('.article-actions').first().getByRole('alert'),
+  ).toContainText('favorite temporarily unavailable')
+  await expect(favoriteButtons).toHaveCount(2)
+  await expect(page.locator('button.btn-outline-primary')).toHaveCount(2)
+
+  await favoriteButtons.first().click()
+
+  await expect(page.getByRole('button', { name: /^Unfavorite/ })).toHaveCount(2)
+  await expect(page.locator('button.btn-primary')).toHaveCount(2)
+  await expect(
+    page.locator('.article-actions').first().getByRole('alert'),
+  ).toHaveCount(0)
+  expect(favoriteRequests).toBe(2)
+})

@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15R · Comment API errors.</div>
+      <div class="container">Iteration 15S · Favorite error recovery.</div>
     </footer>
   </div>
 </template>

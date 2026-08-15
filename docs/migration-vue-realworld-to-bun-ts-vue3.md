@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15R 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15S。
+> 当前状态：迭代 1–14、15A–15S 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15T。
 
 ## 0. 先读这几条约定
 
@@ -1658,7 +1658,16 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15R 验收记录（2026-08-15）：文章交互套件新增 1 个测试，完整 Playwright 累计 41 个；422 评论错误的表单文案、草稿保留、无伪造评论和可重试状态均通过验证。
 
-下一轮 15S：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
+15S 实现记录：
+
+- 在 `tests/e2e/article.spec.ts` 增加收藏 API 失败恢复测试；
+- 第一次 `POST /favorite` 返回 503 时，两个收藏按钮都保持未收藏状态，并显示可读错误；
+- 再次点击后请求成功，两个按钮同步切换为 `Unfavorite`，错误提示被清除；
+- 该测试验证 Article store 的共享状态同步和组件级错误恢复，不连接公共 API。
+
+15S 验收记录（2026-08-15）：文章交互套件新增 1 个测试，完整 Playwright 累计 42 个；收藏 503 → 重试成功的请求次数、按钮状态、错误提示和双位置同步均通过验证。
+
+下一轮 15T：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
 
 ### 推荐提交
 
