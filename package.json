@@ -10,6 +10,7 @@
     "type-check": "bun run --bun vue-tsc -b",
     "test": "bun test",
     "test:e2e": "bunx playwright test",
+    "test:e2e:security": "bunx playwright test --grep @security",
     "test:e2e:official:list": "bunx playwright test --config playwright.official.config.ts --list",
     "test:e2e:official:security:preflight": "bun run --bun scripts/official-security-preflight.ts",
     "format": "bun run --bun prettier . --write",

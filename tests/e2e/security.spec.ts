@@ -39,7 +39,7 @@ async function mockArticlePage(
   )
 }
 
-test('removes scripts, event attributes, and dangerous Markdown URLs', async ({
+test('@security removes scripts, event attributes, and dangerous Markdown URLs', async ({
   page,
 }) => {
   const hostileArticle = {
@@ -78,7 +78,7 @@ test('removes scripts, event attributes, and dangerous Markdown URLs', async ({
   expect(dialogs).toEqual([])
 })
 
-test('renders hostile article descriptions as text in the feed', async ({
+test('@security renders hostile article descriptions as text in the feed', async ({
   page,
 }) => {
   const hostileDescriptionArticle = {
@@ -115,7 +115,7 @@ test('renders hostile article descriptions as text in the feed', async ({
   expect(dialogs).toEqual([])
 })
 
-test('keeps external Markdown links safe and same-origin links local', async ({
+test('@security keeps external Markdown links safe and same-origin links local', async ({
   page,
 }) => {
   const linkedArticle = {
@@ -137,7 +137,7 @@ test('keeps external Markdown links safe and same-origin links local', async ({
   await expect(internal).not.toHaveAttribute('rel')
 })
 
-test('keeps malicious image URLs as attributes, never executable handlers', async ({
+test('@security keeps malicious image URLs as attributes, never executable handlers', async ({
   page,
 }) => {
   const maliciousImage = 'https://example.com/avatar.jpg" onerror="alert(1)'

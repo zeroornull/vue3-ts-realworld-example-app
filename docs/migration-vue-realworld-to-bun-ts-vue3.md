@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15U 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、评论错误、收藏错误恢复、Follow 错误和畸形响应恢复、文章生命周期、Profile、Settings、null/empty 字段、头像资源失败回退、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15V。
+> 当前状态：迭代 1–14、15A–15V 已完成；本地功能迁移、调试契约、普通 Playwright 套件和本地 security 套件已完成，官方 security 执行已增加环境门禁与只读 preflight。官方 RealWorld E2E 主体仍未运行，因为当前没有可丢弃的专用 API；禁止把公共 API 当作写入测试环境。
 
 ## 0. 先读这几条约定
 
@@ -1327,6 +1327,8 @@ src/assets/vite.svg
 src/assets/vue.svg
 ```
 
+当前这些 starter 文件已确认无引用并删除；后续不要重新引入 `playground/` 或 Vite starter 资源。
+
 ### 验收
 
 - [x] `git submodule status` 显示上述固定 commit；
@@ -1336,6 +1338,7 @@ src/assets/vue.svg
 - [x] 表单 `name` 和 placeholder 与 `SELECTORS.md` 一致；
 - [x] 关键文案包括 `Home`、`Global Feed`、`Your Feed`、`Sign in`、`Sign up`、`Publish Article`、`Update Settings`、`Post Comment`、`Favorite/Unfavorite`、`Follow/Unfollow`；
 - [x] 深层链接在 preview/部署服务器有 history fallback。
+- [x] 无引用的 Vite starter 组件和图片已删除。
 
 本轮实现记录：
 
@@ -1440,10 +1443,10 @@ export default defineConfig({
 - [x] `playwright.config.ts` 的 `testDir`、`baseURL`、`webServer.command` 与当前脚本一致；
 - [x] 深层路由刷新不 404；
 - [x] 未登录受保护路由跳 `/login`；
-- [ ] `window.__conduit_debug__` 存在且不打印 token；
-- [ ] 普通套件与 security 套件有独立命令；
-- [ ] 官方 E2E 的通过/失败/未运行状态有真实输出记录；
-- [ ] E2E 不通过修改测试来掩盖实现缺陷。
+- [x] `window.__conduit_debug__` 存在且不把 token 渲染到页面；
+- [x] 普通套件与 security 套件有独立命令；
+- [x] 官方 E2E 的通过/失败/未运行状态有真实输出记录；
+- [x] E2E 不通过修改测试来掩盖实现缺陷。
 
 15A 实现记录：
 
@@ -1685,7 +1688,15 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15U 验收记录（2026-08-15）：Profile/Settings 套件新增 1 个测试，完整 Playwright 累计 44 个；Follow 畸形 2xx → 重试成功的请求次数、原状态保留、错误提示、可重试状态和成功后的按钮状态均通过验证。
 
-下一轮 15V：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离回归，不连接公共服务。
+15V 实现记录：
+
+- 在 `src/main.ts` 注册 `window.__conduit_debug__`，提供 `getToken`、`getAuthState` 和 `getCurrentUser`，供官方 E2E 读取状态；Token 只通过调试函数返回，不渲染到页面文本；
+- 新增 `tests/e2e/debug.spec.ts`，用本地 route mock 验证认证状态、当前用户和 Token 读取契约，并确认页面不显示 Token；
+- 给本地安全测试加上 `@security` 标记，补齐 `bun run test:e2e:security` 独立命令；
+- 删除无引用的 Vite starter 文件：`HelloWorld.vue`、`hero.png`、`vite.svg`、`vue.svg`；
+- 页脚更新为 `Iteration 15V · Local migration complete.`。
+
+15V 验收记录（2026-08-15）：`bun test` 133 个通过；`bun run check`、`bun run build`、`bun run test:e2e`（45 个）和 `bun run test:e2e:security`（4 个）通过；官方 `test:e2e:official:list` 仍可发现 139 个测试，官方主体和 16 个 security 测试未运行，原因是没有专用可丢弃 API；工作区无未提交修改。
 
 ### 推荐提交
 
@@ -1846,7 +1857,7 @@ bun run test:e2e:security
 - [ ] API 默认地址和本地测试 API；
 - [ ] 主题是否原样引入 Conduit Minimal CSS；
 - [ ] Playwright 是否在迭代 15 才加入（建议是）；
-- [ ] `window.__conduit_debug__` 在开发/生产的暴露策略；
+- [x] `window.__conduit_debug__` 在开发/生产的暴露策略：为满足官方 E2E 契约，开发和生产构建都暴露只读函数，不把 Token 写入页面 DOM；
 
 ## 23. 推荐提交历史
 
@@ -1874,6 +1885,7 @@ chore: add RealWorld theme and static assets
 test: add Playwright navigation smoke
 test: add RealWorld end to end coverage
 test: add security regression coverage
+test: expose the browser debug contract
 chore: remove unused starter files
 docs: update incremental migration guide
 ```
