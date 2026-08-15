@@ -146,6 +146,44 @@ test('posts and deletes the current user comment', async ({ page }) => {
   expect(deleteAuthorization).toBe(`Token ${token}`)
 })
 
+test('keeps the comment draft and shows API field errors when posting fails', async ({
+  page,
+}) => {
+  const commentBody = 'A comment that the API rejects.'
+  let createRequests = 0
+
+  await mockSession(page)
+  await mockArticleRead(page, [])
+  await page.route(
+    new RegExp(`/api/articles/${slug}/comments$`),
+    async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback()
+        return
+      }
+
+      createRequests += 1
+      await route.fulfill({
+        status: 422,
+        json: { errors: { body: ['is too short'] } },
+      })
+    },
+  )
+
+  await page.goto(`/article/${slug}`)
+  const textarea = page.locator('textarea[placeholder="Write a comment..."]')
+  await textarea.fill(commentBody)
+  await page.getByRole('button', { name: 'Post Comment' }).click()
+
+  await expect(page.locator('.comment-editor .error-messages')).toContainText(
+    'body is too short',
+  )
+  await expect(textarea).toHaveValue(commentBody)
+  await expect(page.locator('.comment-card')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Post Comment' })).toBeEnabled()
+  expect(createRequests).toBe(1)
+})
+
 test('favorites and unfavorites an article with the RealWorld button states', async ({
   page,
 }) => {
