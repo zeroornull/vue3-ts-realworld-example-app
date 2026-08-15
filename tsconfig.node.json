@@ -22,6 +22,7 @@
   "include": [
     "vite.config.ts",
     "playwright.config.ts",
-    "playwright.official.config.ts"
+    "playwright.official.config.ts",
+    "scripts/**/*.ts"
   ]
 }

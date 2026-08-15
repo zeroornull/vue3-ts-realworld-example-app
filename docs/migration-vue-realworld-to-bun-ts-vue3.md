@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15K 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，下一步进入迭代 15L。
+> 当前状态：迭代 1–14、15A–15L 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，官方 security 执行已增加环境门禁，下一步进入迭代 15M。
 
 ## 0. 先读这几条约定
 
@@ -1571,11 +1571,31 @@ export default defineConfig({
 
 15K 验收记录（2026-08-15）：新增 3 个浏览器安全 E2E，Playwright Chromium 累计 33 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实测恶意 Markdown 的 `script=0`、事件属性=0、`javascript:` 链接=0，且无控制台消息；官方 `@security` 仅完成 16 个测试的 discovery，未连接公共 API。官方 `error-handling`、`user-fetch-errors` 和完整 navigation 套件仍未运行。
 
-下一轮 15L：官方 security 执行门槛与安全回归策略。
+15L 实现记录：
 
-- 明确 API_MODE、API_BASE、测试数据清理和独立后端的运行契约；
-- 对比本地隔离安全用例与官方直接 API 注入用例的覆盖边界；
-- 在具备可清理的专用 API 环境前，不执行会创建用户和文章的官方 security 主体。
+- 新增根目录 `scripts/official-security-gate.ts`，对官方 `@security` 主体执行增加显式环境门禁；
+- `API_MODE=false` 只允许 route-mocked 的官方子集；实际 direct-API/security 执行必须提供 `API_MODE=true`、专用 `API_BASE` 和 mutation/清理确认；
+- `playwright.official.config.ts` 通过 `VITE_API_URL="$API_BASE"` 将官方浏览器请求指向同一个专用 API，避免 API helper 与页面请求漂移；
+- `--list` discovery 不受门禁影响，仍可安全查看 139 个官方测试和 16 个 security 测试；
+- 新增 4 个 Bun 门禁单测，锁定 discovery 放行、route-mocked 模式、显式确认和公共 API 拒绝行为。
+
+官方 security 真正执行前必须同时提供：
+
+```bash
+API_BASE=https://<dedicated-disposable-api>/api \\
+API_MODE=true \\
+OFFICIAL_E2E_ALLOW_MUTATIONS=true \\
+OFFICIAL_E2E_CLEANUP_CONFIRMED=true \\
+bunx playwright test --config playwright.official.config.ts --grep @security
+```
+
+15L 验收记录（2026-08-15）：`bun test` 128 个通过；官方 discovery 仍为 139 个测试/12 个 spec，其中 `@security` 为 16 个测试；使用公共 API 运行命令被 `[official-security-gate] refusing to run mutating security tests against api.realworld.show.` 拒绝，未创建用户、文章或其他远程数据。`bun run check`、`bun run build` 和 `git diff --check` 通过。
+
+下一轮 15M：专用 API 环境下的官方 security dry run。
+
+- 先验证专用 API 的注册、文章创建、用户更新和数据清理闭环；
+- 仅在清理脚本和权限边界可重复验证后，运行官方 16 个 security 测试；
+- 如果没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
 
 ### 推荐提交
 

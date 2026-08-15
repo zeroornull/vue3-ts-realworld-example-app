@@ -8,17 +8,20 @@ const baseURL = 'http://127.0.0.1:4173'
  *
  * Keep the runnable local suite in playwright.config.ts. The upstream tests
  * create and mutate API data, so this config is intentionally exposed through
- * the `test:e2e:official:list` script before we opt into execution.
+ * the `test:e2e:official:list` script before we opt into execution. API-backed
+ * runs additionally require an explicit disposable API and cleanup gate.
  */
 export default defineConfig({
   ...baseConfig,
+  globalSetup: './scripts/official-security-gate.ts',
   testDir: './realworld/specs/e2e',
   use: {
     ...baseConfig.use,
     baseURL,
   },
   webServer: {
-    command: 'bunx vite --host 127.0.0.1 --port 4173 --strictPort',
+    command:
+      'VITE_API_URL="${API_BASE:-https://api.realworld.show/api}" bunx vite --host 127.0.0.1 --port 4173 --strictPort',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -34,6 +34,10 @@ test('keeps upstream E2E discovery separate from the runnable local suite', asyn
     '"test:e2e:official:list": "bunx playwright test --config playwright.official.config.ts --list"',
   )
   expect(officialConfig).toContain("testDir: './realworld/specs/e2e'")
+  expect(officialConfig).toContain(
+    "globalSetup: './scripts/official-security-gate.ts'",
+  )
+  expect(officialConfig).toContain('VITE_API_URL="${API_BASE:-')
   expect(officialConfig).toContain('webServer:')
   expect(officialConfig).toContain('127.0.0.1:4173')
 })
