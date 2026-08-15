@@ -107,6 +107,55 @@ test('keeps a session and exposes unavailable state for an initialization networ
   )
 })
 
+test('keeps a session and exposes unavailable state for a malformed 2xx user payload', async ({
+  page,
+}) => {
+  const token = 'malformed-user-payload-token'
+
+  await page.addInitScript((savedToken) => {
+    localStorage.setItem('jwtToken', savedToken)
+  }, token)
+  await page.route(/\/api\/user$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: { user: { username: 'missing-required-fields' } },
+    })
+  })
+  await mockEmptyHome(page)
+
+  await page.goto('/')
+
+  await expect(page.getByText('Session unavailable')).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('jwtToken'))).toBe(
+    token,
+  )
+})
+
+test('keeps a session and exposes unavailable state for malformed 2xx JSON', async ({
+  page,
+}) => {
+  const token = 'malformed-user-json-token'
+
+  await page.addInitScript((savedToken) => {
+    localStorage.setItem('jwtToken', savedToken)
+  }, token)
+  await page.route(/\/api\/user$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '{"user":',
+    })
+  })
+  await mockEmptyHome(page)
+
+  await page.goto('/')
+
+  await expect(page.getByText('Session unavailable')).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('jwtToken'))).toBe(
+    token,
+  )
+})
+
 test('shows API field errors when login is rejected', async ({ page }) => {
   await page.route(/\/api\/users\/login$/, async (route) => {
     await route.fulfill({

@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15N 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常、认证初始化异常和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15O。
+> 当前状态：迭代 1–14、15A–15O 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15P。
 
 ## 0. 先读这几条约定
 
@@ -1624,7 +1624,16 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15N 验收记录（2026-08-15）：`tests/e2e/error-states.spec.ts` 8 个测试通过（新增 3 个），完整本地 Playwright 套件预计累计 36 个；新增测试实测 4xx 清除 token、5xx/网络错误保留 token，页面均保持可操作。官方 `user-fetch-errors` 仍未执行，等待专用 API 和真实环境门禁。
 
-下一轮 15O：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
+15O 实现记录：
+
+- 在 `tests/e2e/error-states.spec.ts` 增加 2 个本地 route-mocked 浏览器测试，覆盖初始化 `/api/user` 的畸形成功响应；
+- HTTP 200 但 `user` 缺少必填字段时，保留 token 并显示 `Session unavailable`；
+- HTTP 200 但 JSON 无法解析时，同样降级为 unavailable，不把半截数据当作已登录用户；
+- 这组测试与 `isUserResponse` 的服务层守卫、已有 Bun 单测和 15N 的 HTTP 4xx/5xx/网络测试形成完整初始化响应矩阵。
+
+15O 验收记录（2026-08-15）：`tests/e2e/error-states.spec.ts` 10 个测试通过（本轮新增 2 个），完整本地 Playwright 套件累计 38 个；新增测试实测畸形 2xx payload 和畸形 JSON 均保留 token、显示 unavailable，页面没有白屏或错误导航。官方 `user-fetch-errors` 仍未执行，等待专用 API 和真实环境门禁。
+
+下一轮 15P：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
 
 ### 推荐提交
 

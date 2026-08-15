@@ -72,7 +72,7 @@ function logout(): void {
     <RouterView />
 
     <footer class="site-footer">
-      <div class="container">Iteration 15N · Auth initialization errors.</div>
+      <div class="container">Iteration 15O · Malformed auth responses.</div>
     </footer>
   </div>
 </template>
