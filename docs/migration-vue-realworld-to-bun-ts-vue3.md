@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15J 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态和网络/响应异常，下一步进入迭代 15K。
+> 当前状态：迭代 1–14、15A–15K 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，下一步进入迭代 15L。
 
 ## 0. 先读这几条约定
 
@@ -1561,11 +1561,21 @@ export default defineConfig({
 
 15J 验收记录（2026-08-15）：新增 4 个网络/响应 E2E，Playwright Chromium 累计 30 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 将 API 端口设为不可达时实测显示 `Unable to connect to the article service.` 与 Popular Tags fallback，页面不再停留在 Loading（浏览器仅记录预期的 `ERR_CONNECTION_REFUSED`）。官方 `error-handling`、`user-fetch-errors`、完整 navigation 和 security 套件仍未运行。
 
-下一轮 15K：安全内容的浏览器级验收与官方 security 套件准备。
+15K 实现记录：
 
-- 将已通过 Bun 单测的 Markdown XSS 规则提升到文章详情浏览器断言；
-- 确认危险 URL、事件属性和脚本不会进入 DOM；
-- 先运行本地隔离安全用例，再评估官方 `@security` 测试的真实 API 前置条件。
+- 新增 `tests/e2e/security.spec.ts`，使用本地 route mock 把 Markdown 安全规则提升到真实浏览器 DOM；
+- 文章正文验证 `<script>`、`onerror`/`onload`/`onclick` 和 `javascript:` URL 不会进入可执行 DOM；
+- 外部 HTTP 链接强制使用 `target="_blank"` 与 `rel="noopener noreferrer"`，站内链接保持本地导航；
+- 恶意头像 URL 只作为图片属性处理，不会生成事件属性或触发浏览器 dialog；
+- 执行 `bunx playwright test --config playwright.official.config.ts --grep @security --list`，确认官方 `xss-security.spec.ts` 共 16 个测试；未执行官方主体，避免写入公共 API 数据。
+
+15K 验收记录（2026-08-15）：新增 3 个浏览器安全 E2E，Playwright Chromium 累计 33 个测试通过；`bun run check`、124 个 Bun 测试、`bun run build` 和 `git diff --check` 通过；Chrome DevTools 实测恶意 Markdown 的 `script=0`、事件属性=0、`javascript:` 链接=0，且无控制台消息；官方 `@security` 仅完成 16 个测试的 discovery，未连接公共 API。官方 `error-handling`、`user-fetch-errors` 和完整 navigation 套件仍未运行。
+
+下一轮 15L：官方 security 执行门槛与安全回归策略。
+
+- 明确 API_MODE、API_BASE、测试数据清理和独立后端的运行契约；
+- 对比本地隔离安全用例与官方直接 API 注入用例的覆盖边界；
+- 在具备可清理的专用 API 环境前，不执行会创建用户和文章的官方 security 主体。
 
 ### 推荐提交
 
