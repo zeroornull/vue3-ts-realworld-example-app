@@ -29,6 +29,84 @@ async function mockEmptyComments(page: Page, slug: string): Promise<void> {
   )
 }
 
+async function mockEmptyHome(page: Page): Promise<void> {
+  await page.route(/\/api\/articles(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ json: { articles: [], articlesCount: 0 } })
+  })
+  await page.route(/\/api\/tags$/, async (route) => {
+    await route.fulfill({ json: { tags: [] } })
+  })
+}
+
+test('clears an expired session when initialization returns a 4xx', async ({
+  page,
+}) => {
+  const token = 'expired-session-token'
+
+  await page.addInitScript((savedToken) => {
+    localStorage.setItem('jwtToken', savedToken)
+  }, token)
+  await page.route(/\/api\/user$/, async (route) => {
+    await route.fulfill({
+      status: 401,
+      json: { errors: { token: ['expired'] } },
+    })
+  })
+  await mockEmptyHome(page)
+
+  await page.goto('/')
+
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign up' })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('jwtToken'))).toBeNull()
+})
+
+test('keeps a session and exposes unavailable state for an initialization 5xx', async ({
+  page,
+}) => {
+  const token = 'temporarily-unavailable-token'
+
+  await page.addInitScript((savedToken) => {
+    localStorage.setItem('jwtToken', savedToken)
+  }, token)
+  await page.route(/\/api\/user$/, async (route) => {
+    await route.fulfill({
+      status: 503,
+      json: { errors: { service: ['temporarily unavailable'] } },
+    })
+  })
+  await mockEmptyHome(page)
+
+  await page.goto('/')
+
+  await expect(page.getByText('Session unavailable')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('jwtToken'))).toBe(
+    token,
+  )
+})
+
+test('keeps a session and exposes unavailable state for an initialization network error', async ({
+  page,
+}) => {
+  const token = 'offline-session-token'
+
+  await page.addInitScript((savedToken) => {
+    localStorage.setItem('jwtToken', savedToken)
+  }, token)
+  await page.route(/\/api\/user$/, async (route) => {
+    await route.abort('failed')
+  })
+  await mockEmptyHome(page)
+
+  await page.goto('/')
+
+  await expect(page.getByText('Session unavailable')).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('jwtToken'))).toBe(
+    token,
+  )
+})
+
 test('shows API field errors when login is rejected', async ({ page }) => {
   await page.route(/\/api\/users\/login$/, async (route) => {
     await route.fulfill({

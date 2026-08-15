@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15M 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15N。
+> 当前状态：迭代 1–14、15A–15N 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常、认证初始化异常和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15O。
 
 ## 0. 先读这几条约定
 
@@ -1615,7 +1615,16 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15M 验收记录（2026-08-15）：`bun test` 133 个通过；preflight 单测确认缺少环境变量时不会调用 `fetch`，合法专用 API 默认也不会发请求，`--health-check` 仅使用 `GET /tags`；当前环境未提供专用 API，因此没有执行官方 16 个 security 主体，也没有连接或写入公共 API。`bun run check`、`bun run build` 和 `git diff --check` 继续作为本轮完成门槛。
 
-下一轮 15N：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
+15N 实现记录：
+
+- 在 `tests/e2e/error-states.spec.ts` 增加 3 个本地 route-mocked 浏览器测试，对齐官方 `user-fetch-errors` 的核心行为；
+- 初始化请求 `/api/user` 返回 4xx 时清除过期 token，导航显示 `Sign in` / `Sign up`；
+- 返回 5xx 或网络失败时保留 token，导航显示 `Session unavailable` 和 `Log out`，不会把会话误判为已退出；
+- 所有响应均由 Playwright 本地 route mock 提供，不连接 API，也不写入远程数据。
+
+15N 验收记录（2026-08-15）：`tests/e2e/error-states.spec.ts` 8 个测试通过（新增 3 个），完整本地 Playwright 套件预计累计 36 个；新增测试实测 4xx 清除 token、5xx/网络错误保留 token，页面均保持可操作。官方 `user-fetch-errors` 仍未执行，等待专用 API 和真实环境门禁。
+
+下一轮 15O：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
 
 ### 推荐提交
 
