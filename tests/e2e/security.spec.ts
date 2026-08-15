@@ -50,8 +50,10 @@ test('removes scripts, event attributes, and dangerous Markdown URLs', async ({
       '<img src="x" onerror="alert(1)">',
       '<svg onload="alert(2)"></svg>',
       '<div onclick="alert(3)">event text stays visible</div>',
-      '[danger](javascript:alert(4))',
-      '<a href="javascript:alert(5)">danger link</a>',
+      '<div onmouseover="alert(4)">hover text stays visible</div>',
+      '<iframe srcdoc="<script>alert(5)</script>"></iframe>',
+      '[danger](javascript:alert(6))',
+      '<a href="javascript:alert(7)">danger link</a>',
     ].join('\n\n'),
   }
   const dialogs: string[] = []
@@ -67,11 +69,49 @@ test('removes scripts, event attributes, and dangerous Markdown URLs', async ({
   const markdown = page.locator('.markdown-body')
   await expect(markdown).toContainText('Sanitized browser content')
   await expect(markdown).toContainText('event text stays visible')
+  await expect(markdown).toContainText('hover text stays visible')
   await expect(markdown.locator('script')).toHaveCount(0)
-  await expect(markdown.locator('[onerror], [onload], [onclick]')).toHaveCount(
-    0,
-  )
+  await expect(
+    markdown.locator('[onerror], [onload], [onclick], [onmouseover], iframe'),
+  ).toHaveCount(0)
   await expect(markdown.locator('a[href^="javascript:"]')).toHaveCount(0)
+  expect(dialogs).toEqual([])
+})
+
+test('renders hostile article descriptions as text in the feed', async ({
+  page,
+}) => {
+  const hostileDescriptionArticle = {
+    ...article,
+    slug: 'browser-security-description',
+    title: 'Description security article',
+    description:
+      'Before description <img src=x onerror="alert(1)"> <script>alert(2)</script> after description',
+  }
+  const dialogs: string[] = []
+
+  page.on('dialog', async (dialog) => {
+    dialogs.push(dialog.type())
+    await dialog.dismiss()
+  })
+  await page.route(/\/api\/articles(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      json: {
+        articles: [hostileDescriptionArticle],
+        articlesCount: 1,
+      },
+    })
+  })
+  await page.route(/\/api\/tags$/, async (route) => {
+    await route.fulfill({ json: { tags: [] } })
+  })
+
+  await page.goto('/')
+
+  const preview = page.locator('.article-preview').first()
+  await expect(preview.locator('p')).toContainText('Before description')
+  await expect(preview.locator('p')).toContainText('after description')
+  await expect(preview.locator('p script, p img, p [onerror]')).toHaveCount(0)
   expect(dialogs).toEqual([])
 })
 

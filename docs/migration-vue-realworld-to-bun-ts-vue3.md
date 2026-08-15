@@ -5,7 +5,7 @@
 > 目标仓库：`/home/pax/Project/front_project/vue3-ts-realworld-example-app`  
 > 参考仓库：`/home/pax/Project/github/vue-realworld-example-app`  
 > 编写日期：2026-08-13  
-> 当前状态：迭代 1–14、15A–15O 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15P。
+> 当前状态：迭代 1–14、15A–15P 已完成；Playwright 已覆盖导航、标签、分页、认证、文章交互、文章生命周期、Profile、Settings、null/empty 字段、API 错误态、网络/响应异常、认证初始化异常、畸形 2xx 响应、文章描述安全和浏览器安全，官方 security 执行已增加环境门禁与只读 preflight，下一步进入迭代 15Q。
 
 ## 0. 先读这几条约定
 
@@ -1633,7 +1633,15 @@ bun run test:e2e:official:security:preflight -- --health-check
 
 15O 验收记录（2026-08-15）：`tests/e2e/error-states.spec.ts` 10 个测试通过（本轮新增 2 个），完整本地 Playwright 套件累计 38 个；新增测试实测畸形 2xx payload 和畸形 JSON 均保留 token、显示 unavailable，页面没有白屏或错误导航。官方 `user-fetch-errors` 仍未执行，等待专用 API 和真实环境门禁。
 
-下一轮 15P：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
+15P 实现记录：
+
+- 扩展本地 `tests/e2e/security.spec.ts`，加入官方 XSS 用例中的 `iframe srcdoc` 和 `onmouseover` payload；
+- 新增 Feed 文章描述安全测试，确认 Vue 插值只显示文本，不把 `<img onerror>` 或 `<script>` 变成 DOM 节点；
+- 所有安全场景继续使用本地 route mock，不执行 API 写操作，也不连接公共服务。
+
+15P 验收记录（2026-08-15）：本地 Playwright 安全套件新增 1 个测试，累计 39 个 E2E；验证 `iframe=0`、危险事件属性=0、文章描述中的 `script/img=0`，且没有触发浏览器 dialog。官方 `@security` 仍只完成 discovery，未执行主体。
+
+下一轮 15Q：如果获得专用 API，先运行 preflight，再验证注册/文章创建/用户更新/清理闭环，最后才运行官方 16 个 security 测试；如果仍没有专用 API，继续扩展本地隔离安全回归，不连接公共服务。
 
 ### 推荐提交
 
