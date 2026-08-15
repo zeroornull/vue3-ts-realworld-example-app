@@ -1709,7 +1709,7 @@ bun run test:e2e:official:security:preflight -- --health-check
 - 使用 Bun `1.3.14`，先运行 `bun run check && bun test`，再运行 `bun run build`；
 - `@types/node` 作为直接开发依赖声明，满足 `tsconfig.node.json` 的 `types: ["node"]`，避免 CI 的隔离安装漏掉传递依赖；
 - 构建时自动把 `GITHUB_REPOSITORY` 的仓库名转换为 Vite base，例如 `/vue3-ts-realworld-example-app/`；
-- 使用 `actions/upload-pages-artifact@v4` 和 `actions/deploy-pages@v4` 发布 `dist/`；
+- 使用 `actions/configure-pages@v6`、`actions/upload-pages-artifact@v5` 和 `actions/deploy-pages@v5` 发布 `dist/`（Node 24 runtime）；
 - `public/404.html` 和 `index.html` 配合处理 GitHub Pages 的 SPA 深层路由刷新，保留 `createWebHistory` 的正常 URL；
 - `tests/github-pages-contract.test.ts` 锁定 workflow、submodule、base path 和 fallback 契约。
 
@@ -1720,6 +1720,8 @@ bun run test:e2e:official:security:preflight -- --health-check
 3. 推送包含 `.github/workflows/deploy-pages.yml` 的 `master`；
 4. 等待 `Deploy to GitHub Pages` workflow 成功；
 5. 访问：`https://zeroornull.github.io/vue3-ts-realworld-example-app/`。
+
+如果 workflow 在 `actions/configure-pages` 报 `Get Pages site failed / Not Found`，说明仓库还没有启用 Pages，或 Source 仍不是 `GitHub Actions`。先完成第 1–2 步，再重新运行 workflow；不需要修改 API 配置，也不需要新增 PAT。
 
 ### 发布前检查
 
